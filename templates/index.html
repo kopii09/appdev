@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Information System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Student Information System</h1>
+        <form method="post" action="/add">
+            <input type="text" name="name" placeholder="Name" required>
+            <input type="number" name="age" placeholder="Age" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <button type="submit">Add Student</button>
+        </form>
+        
+        <table>
+            <tr><th>Name</th><th>Age</th><th>Email</th><th>Actions</th></tr>
+            {% for student in students %}
+            <tr>
+                <form method="post" action="/update/{{ student.id }}">
+                    <td><input type="text" name="name" value="{{ student.name }}"></td>
+                    <td><input type="number" name="age" value="{{ student.age }}"></td>
+                    <td><input type="email" name="email" value="{{ student.email }}"></td>
+                    <td>
+                        <button type="submit">Update</button>
+                        <a href="/delete/{{ student.id }}">Delete</a>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
