@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/base.css') }}"
+/>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <title>
+      {% block title %} {% endblock %}
+    </title>
+    <link rel="icon" href="/static/assets/winIcon.png" type="image/png">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg bg-light">
+      <div class="container-fluid justify-content-center">
+        <a class="navbar-brand mx-auto" href="/">
+          <img src="/static/assets/winIcon.png" alt="Logo" width="30" height="28" class="d-inline-block align-text-top">
+          CSC181 - Student Information System</a>
+        
+        <body>
+          <nav class="navbar navbar-expand-lg bg-light">
+            <div class="container-fluid">
+              
+              <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav"
+                aria-controls="navbarNav"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
+              
+            </div>
+          </nav>
+      </div>
+    </nav>
+
+
+
+      {% block content %} 
+      
+      {% endblock %}
+    </div>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-dismissible fade show mt-3 {% if 'error' in messages[0]|lower %}alert-danger{% else %}alert-success{% endif %}" role="alert">
+              {% for message in messages %}
+                <span>{{ message }}</span><br>
+              {% endfor %}
+              
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endif %}
+        {% endwith %}
+
+    
+    
+{% block scripts %}
+
+  
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Cropper CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+
+<!-- Cropper JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+
+
+<script>
+$(document).ready(function() {
+  // Get the current URL path and find the corresponding link in the navbar
+  var currentPath = window.location.pathname;
+  $('.navbar-nav .nav-link').each(function() {
+    var href = $(this).attr('href');
+    if (href === currentPath) {
+      $(this).addClass('active-page');
+    }
+  });
+});
+</script>
+
+</body> 
+</html>
+
+{% endblock %}

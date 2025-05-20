@@ -1,0 +1,156 @@
+.container mt-5 {
+
+ background-color: #FFD966;
+}
+
+.header {
+    text-align: left;
+    padding-top: 0.1em;
+    padding-left: 0.1em;
+    padding-bottom: 0em;
+    font-size: 70px;
+  }
+
+
+.navbar-brand{
+    font-size: 20px;
+    padding-left: 10px;
+    text-align: center;
+}
+
+.navbar-nav .nav-link.active-page {
+  
+    font-weight: bold;
+  }
+
+
+  .alert {
+    position: fixed;
+    float: right;
+    margin-top: 30px;
+    margin-right: 10px;
+    bottom: 0;
+    width: 25%;
+    text-align: center;
+    font-size: bold 14px;
+}
+
+.alert-success {
+    background-color: #D4EDDA;
+    border-color: #C3E6CB;
+    color: #155724 !important;
+
+}
+
+.alert-danger {
+    background-color: #F8D7DA;
+    border-color: #F5C6CB;
+    color: #721C24 !important;
+}
+
+
+/* cloudinary stuff */
+.img {
+    position: absolute;
+    width: auto;
+    height: auto;
+    max-height: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    object-position: center center;
+}
+
+.circle-con {
+    position: relative;
+    overflow: hidden;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 55px;
+    justify-content: center;
+  }
+
+.change-image {
+    position: absolute;
+    bottom: -55px;
+    right: 50px;
+    z-index: 2;
+  }
+
+  .circle-container {
+    position: relative;
+    overflow: hidden;
+    width: 150px;
+    height: 150px;
+    border: 2px  #ccc;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 150px;
+    justify-content: center;
+  }
+  
+  #preview-image {
+    position: absolute;
+    width: auto;
+    height: auto;
+    max-height: 100%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  .image-circle {
+    position: relative;
+    overflow: hidden;
+    width: 150px;
+    height: 150px;
+    border: 2px  #ccc;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 150px;
+    justify-content: center;
+  }
+  
+  #detailsStudentPic {
+    position: absolute;
+    width: auto;
+    height: auto;
+    max-height: 100%;
+ 
+    top: 50%;
+    left: 50%;
+    
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    object-position: center center;
+  }
+
+/* Edit Student */
+#preview-image1 {
+  position: absolute;
+  width: auto;
+  height: auto;
+  max-height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  object-position: center center;
+}
+
+.circle-container1 {
+  position: relative;
+  overflow: hidden;
+  width: 150px;
+  height: 150px;
+  border: 2px  #ccc;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 150px;
+  justify-content: center;
+}

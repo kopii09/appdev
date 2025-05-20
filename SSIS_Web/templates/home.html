@@ -1,0 +1,23 @@
+{% extends "base.html" %} {% block title %} Student Information System {%
+endblock %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/home.css') }}"
+/>
+
+<div class="container mt-5 d-flex justify-content-center">
+  <div class="row text-center">
+    <div class="col">
+      <h1 class="header"><a href="/students">Student</a></h1>
+    </div>
+    <div class="col">
+      <h1 class="header"><a href="/courses">Course</a></h1>
+    </div>
+    <div class="col">
+      <h1 class="header"><a href="/colleges">College</a></h1>
+    </div>
+  </div>
+
+
+  {% endblock %}
+</div>

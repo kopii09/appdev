@@ -1,0 +1,813 @@
+{% extends "base.html" %} {% block title %} Student List {% endblock %}  {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/templates.css') }}"
+/>
+
+{% block scripts %}
+  {{ super() }}
+{% endblock %}
+
+<div class="container mt-2">
+  <!-- Search bar and Add button row -->
+  <div class="row mb-3">
+    <div class="col">
+      <h1 class="header">
+        Students</h1> 
+    </div>
+    <div class="col mt-auto">
+      <!-- Button to trigger the modal -->
+      <button type="button" class="btn btn-outline-info" id="addButton">
+        <img src="/static/assets/add.png" alt="Add" class="icon" />
+        Add Student
+      </button>
+    </div>
+    <div class="col order-md-last mt-auto">
+      <!-- Dropdown menu for selecting search field and input field for search query -->
+      <div class="field-selection">
+        <!-- Dropdown menu for selecting search field -->
+        <select class="form-select search-selector" id="searchField">
+          <option value="all">All columns</option>
+          <option value="id">ID</option>
+          <option value="firstname">First name</option>
+          <option value="lastname">Last name</option>
+          <option value="course">Course</option>
+          <option value="college">College</option>
+          <option value="year">Year</option>
+          <option value="gender">Gender</option>
+        </select>
+
+        <!-- Input field for search query -->
+        <form id="searchForm" class="col-md-9">
+        <div class="input-group custom-search-input ">
+          <input
+            type="text"
+            class="form-control custom-search-input"
+            id="searchInput"
+            placeholder="Search"
+          />
+          <div class="input-group-append">
+            <button
+              type="button"
+              class="btn btn-outline-info"
+              id="searchButton"
+            >
+              <img src="/static/assets/search.png" alt="Search" class="icon" />
+            </button>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <!-- Bootstrap-styled table -->
+    <table class="table table-hover">
+      <!-- Table header -->
+      <thead>
+        <tr>
+          <th scope="col"> </th>
+          <th scope="col">ID</th>
+          <th scope="col">First Name</th>
+          <th scope="col">Last Name</th>
+          <th scope="col">Course</th> 
+          <th scope="col">College</th>
+          <th scope="col">Year</th>
+          <th scope="col">Gender</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Table rows for student data -->
+        {% for student in student_data %}
+        <tr>
+          <!-- Data for each column -->
+
+          <td scope="row">
+            <div class="circle-con">
+            <img class="img" src="{% if student.pic is not defined or student.pic is none %}
+            {{ url_for('static', filename='assets/default-picture.jpg') }}
+              {% else %}
+                {{ student.pic }}
+              {% endif %}"
+            style = "height:55px; width:55px;"/>
+            </div></td>
+          <td class="id">{{ student.id}}</td>
+          <td class="firstname">{{ student.firstname }}</td>
+          <td class="lastname">{{ student.lastname }}</td>
+          <td class="course">{{ student.course }}</td>
+          <td class="college">{{ student.college }}</td>
+          <td class="year">{{ student.year }}</td>
+          <td class="gender">{{ student.gender }}</td>
+          <td>
+            <div class="btn-group" role="group">
+              <!-- Edit button -->
+              <button
+                class="btn btn-outline-info btn-sm edit-button row-button"
+                data-toggle="modal" 
+                data-target="#editStudentModal"
+                data-student-pic="{{ student.pic }}"
+                data-student-id="{{ student.id }}"
+                data-firstname="{{ student.firstname }}"
+                data-lastname="{{ student.lastname }}"
+                data-course="{{ student.course }}"
+                data-year="{{ student.year }}"
+                data-gender="{{ student.gender }}"
+              >
+                <img src="/static/assets/edit.png" alt="Edit" class="icon row-button" />
+              </button>
+              
+              <!-- Delete button form -->
+              <form
+                id="deleteStudentForm"
+                action="/students/delete/{{ student.id }}"
+                method="POST"
+                class="row-button"
+              >
+                {{ form.hidden_tag() }}
+                <button
+                  class="btn btn-outline-danger btn-sm ml-10 delete-button row-button"
+                  data-student-id="{{ student.id }}"
+                  id="deleteStudentFromList"
+                >
+                  <img
+                    src="/static/assets/delete.png"
+                    alt="Delete"
+                    class="icon row-button"
+                  />
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EDIT Student Modal -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" role="dialog" aria-labelledby="editStudentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+      <h5 class="modal-title" id="editStudentModalLabel">Edit Student</h5>
+      </div>
+      <div class="modal-body">
+        <!-- Form to edit an existing student -->
+        <form
+          action="/students/edit/"
+          method="POST"
+          class="editStudentForm"
+          id="editStudentForm"
+          enctype="multipart/form-data"
+        >
+          <!-- Input fields for student information -->
+          <div class="row">
+
+            <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
+              <label for="file-input1" style="cursor: pointer;">
+                <div class="circle-container1" style="position: relative;">
+                  <input type="file" id="file-input1" name="pic1" style="position: absolute; left: -9999px;" accept="image/*" onchange="previewImage1(event)">
+                  <input id="image_url1" name="image_url1 " hidden />
+            
+                  <img 
+                    alt="default-pic" 
+                    src="{{ url_for('static', filename='assets/default-picture.jpg') }}" 
+                    id="preview-image1"
+                
+                    data-default-pic="true"
+                    style="opacity: 80%" 
+                  />
+                  
+                  <div class="change-image">
+                    <img src="{{ url_for('static', filename='assets/edit.png') }}" alt="change" id="change-image" style="transform: scale(0.6);">
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+            
+
+         
+
+            <!-- ID Number -->
+          <div class="row-md-6">
+            <div class="form-group">
+              <label for="studentID">ID Number</label>
+              <input
+                type="text"
+                class="form-control"
+                id="studentID"
+                name="studentID"
+                pattern="\d{4}-\d{4}"
+                value="{{ existing_id  }}"
+                
+                
+                required
+              />
+                <small id="idHelp" class="form-text text-muted">
+                  Format: YYYY-NNNN (e.g., 2023-1234)
+                </small>
+            </div>
+          </div>
+
+          <!-- First Name and Last Name in the Same Row -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-2">
+                <label for="firstName">First Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="firstName"
+                  name="firstName"
+                  data-student-id=""
+                  required
+                />
+              </div>
+            </div>
+          
+              <div class="col-md-6">
+                <div class="form-group mb-2">
+                  <label for="lastName">Last Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="lastName"
+                    name="lastName"
+                    data-student-id=""
+                    required
+                  />
+                </div>
+              </div>
+          </div>
+
+          <!-- Course, Year same Row -->
+          <div class="row">
+            <div class="col-md-9">
+              <div class="form-group mb-2">
+                <label for="course">Course</label>
+                <select
+                  type="text"
+                  class="form-select"
+                  id="course"
+                  name="course"
+                  data-student-id=""
+                  required
+                >
+                {% for course in courses %}
+                  <option value="{{ course.code }}">{{ course.name }}</option>
+                {% endfor %}
+                </select>
+              </div>
+            </div>
+                
+            <div class="col-md-3">
+              <div class="form-group mb-2">
+                <label for="year">Year</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="year"
+                  name="year"
+                  data-student-id=""
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mb-2">
+            <label for="gender">Gender</label>
+            <select class="form-select" id="gender" name="gender" required>
+              <option value="" disabled selected class="disabled-option" >Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Transgender">Transgender</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+              <option value="Not listed">Not listed</option>
+            </select>
+          </div>
+         
+          <!-- Hidden input field to store the current course -->
+          <input type="hidden" id="currentCourse" name="currentCourse" />
+
+          <!-- CSRF Token -->
+          {{ form.hidden_tag() }}
+
+          <!-- Modal footer with submit button -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="closeEditModalButton"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+          
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+        
+    
+  <!-- Add Student Modal -->
+  <div
+    class="modal fade"
+    id="addStudentModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="addStudentModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addStudentModalLabel">
+            Add New Student
+          </h5>
+        </div>
+        <div class="modal-body">
+        <!-- Form to add a new student -->
+          <!-- HTML Form -->
+          <form id="addStudentForm" action="/students/add" method="POST" enctype="multipart/form-data">
+            <div class="row">
+
+              <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
+                <label for="file-input" style="cursor: pointer;">
+                  <div class="circle-container" style="position: relative;">
+                    <input type="file" id="file-input" name="pic" style="position: absolute; left: -9999px;" accept="image/*" onchange="previewImage(event, this)">
+
+                    <input id="image_url" name="image_url" hidden />
+
+                    <img src="{{ url_for('static', filename='assets/default-picture.jpg') }}" alt="default-pic" id="preview-image" style="opacity: 50%">
+                    <div class="change-image">
+                      <img src="{{ url_for('static', filename='assets/edit.png') }}" alt="change" id="change-image" style="transform: scale(0.6);">
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+                
+              
+            <!-- ID Number -->
+            <div class="row-md-6">
+              <div class="form-group">
+              <label for="studentID">ID Number</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="studentID"
+                  name="studentID"
+                  pattern="\d{4}-\d{4}"
+                  required
+                />
+                <small id="idHelp" class="form-text text-muted" style="font-size: 12px;">
+                  Format: YYYY-NNNN (e.g., 2023-1234)
+                </small>
+              </div>
+            </div>
+
+            <!-- First Name and Last Name in the Same Row -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-2">
+                <label for="firstName">First Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="firstName"
+                  name="firstName"
+                  required
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-2">
+                <label for="lastName">Last Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="lastName"
+                  name="lastName"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Course, Year same Row -->
+          <div class="row">
+            <div class="col-md-9">
+              <div class="form-group mb-2">
+                <label for="course">Course</label>
+                <select class="form-select" id="course" name="course" required>
+                  <option value="" disabled selected class="disabled-option">Select a course</option>
+                  {% for course in courses %}
+                  <option value="{{ course.code }}">{{ course.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group mb-2">
+                <label for="year">Year</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="year"
+                  name="year"
+                  required
+                />
+              </div>
+           
+          </div>    
+
+            <div class="form-group mb-2">
+                <label for="gender">Gender</label>
+                <select
+                  class="form-select"
+                  id="gender"
+                  name="gender"
+                  required
+                >
+                  <option value="" disabled selected class="disabled-option">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Transgender">Transgender</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                  <option value="Not listed">Not listed</option>
+                </select>
+              </div>
+            </div>
+          
+        </form>
+
+            <!-- Hidden input fields to store form data -->
+            <input type="hidden" id="hiddenPicture" name="hiddenPicture"/>
+            <input type="hidden" id="hiddenIDNumber"name="hiddenIDNumber"/>
+            <input type="hidden" id="hiddenFirstName" name="hiddenFirstName" />
+            <input type="hidden" id="hiddenLastName" name="hiddenLastName"/>
+            <input type="hidden" id="hiddenCourse" name="hiddenCourse" />
+            <input type="hidden" id="hiddenYear" name="hiddenYear" />
+            <input type="hidden" id="hiddenGender" name="hiddenGender" />
+
+            <!-- CSRF Token -->
+            {{ form.hidden_tag() }} 
+
+            <!-- Modal footer with submit button -->
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="closeAddModalButton"
+                data-dismiss="modal"
+              >
+                Close
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Add Student
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1" role="dialog" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="studentDetailsModalLabel">Student Details</h5>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+          <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
+            <div class="image-circle" style="position: relative;">
+              <img id="detailsStudentPic" src="" class="mb-3" />
+            </div>
+          </div>
+        </div>
+        <!-- Details arranged in a grid layout -->
+        <div class="row">
+          <div class="col-sm-6 text-left" style="padding-left: 50px">
+            <div>ID: <strong><span id="detailsStudentID"></span></strong></div>
+            <div>First Name: <strong><span id="detailsFirstName"></span></strong></div>
+            <div>Last Name: <strong><span id="detailsLastName"></span></strong></div>
+          </div>
+          <div class="col-sm-6 text-left" style="padding-left: 20px">
+            <div>Course: <strong><span id="detailsCourse"></span></strong></div>
+            <div>Year: <strong><span id="detailsYear"></span></strong></div>
+            <div>Gender: <strong><span id="detailsGender"></span></strong></div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+$(document).ready(function () {
+   $("#addButton").click(function () {
+      // Clear input fields and hidden fields when the modal is opened
+      $("#addStudentForm")[0].reset();
+      $("#hiddenPicture").val(""); 
+      $("#hiddenIDNumber").val("");
+      $("#hiddenFirstName").val("");
+      $("#hiddenLastName").val("");
+      $("#hiddenCourse").val("");
+      $("#hiddenYear").val("");
+      $("#hiddenGender").val("");
+      
+      $("#addStudentModal").modal("show");
+    });
+
+    $("#addStudentForm").submit(function (event) {
+      // Update hidden input fields with form data
+      console.log("Form Data before submission:", $("#addStudentForm").serialize());
+      $("#hiddenPicture").val($("#pic").val());
+      $("#hiddenIDNumber").val($("#idnumber").val());
+      $("#hiddenFirstName").val($("#firstName").val());
+      $("#hiddenLastName").val($("#lastName").val());
+      $("#hiddenCourse").val($("#course").val());
+      $("#hiddenYear").val($("#year").val());
+      $("#hiddenGender").val($("#gender").val());
+      console.log("Form submitted!"); 
+    });
+
+  // Close add modal function
+  function closeAddModal() {
+    $("#addStudentModal").modal("hide");
+  }
+
+  $("#closeAddModalButton").click(function () {
+    closeAddModal();
+  });
+
+
+  
+
+  $("#deleteStudentFromList").click(function (event) {
+    if (!confirm("Are you sure you want to delete this student?")) {
+      event.preventDefault();
+    } else {
+      var studentId = $(this).data("student-id");
+    }
+  });
+
+  $("#searchButton").click(function(event) {
+    event.preventDefault(); // Prevent default button click behavior
+    performSearch();
+  });
+
+  $("#searchForm").submit(function(event) {
+        event.preventDefault(); // Prevent default form submission
+        performSearch();
+    });
+
+    function performSearch() {
+        var searchField = $("#searchField").val();
+        var searchQuery = $("#searchInput").val().toLowerCase();
+
+        $(".table-hover tbody tr").each(function () {
+            var rowData = $(this)
+                .find("." + searchField)
+                .text()
+                .toLowerCase();
+
+            if (searchField === "all") {
+                rowData = $(this).text().toLowerCase();
+            }
+
+            // Show/hide rows based on search query
+            if (rowData.includes(searchQuery)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+
+
+
+   // Edit Modal
+   function closeEditModal() {
+    $("#editStudentModal").modal("hide");
+  }
+
+  $("#closeEditModalButton").click(function () {
+    closeEditModal();
+  });
+  
+
+  $(".edit-button").click(function () {
+    var studentPic = $(this).data("student-pic"); // Ensure the attribute is correctly set
+    var studentId = $(this).data("student-id");
+    var firstname = $(this).data("firstname");
+    var lastname = $(this).data("lastname");
+    var course = $(this).data("course");
+    var year = $(this).data("year");
+    var gender = $(this).data("gender");
+    var currentCourse = $(this).data("course");
+  
+    // Populate the form fields with the student data
+    $("#editStudentForm input[name='studentID']").val(studentId);
+    $("#editStudentForm input[name='firstName']").val(firstname);
+    $("#editStudentForm input[name='lastName']").val(lastname);
+    $("#editStudentForm input[name='course']").val(course);
+    $("#editStudentForm input[name='year']").val(year);
+    $("#editStudentForm select[name='gender']").val(gender);
+    $("#currentCourse").val(currentCourse);
+    
+    console.log("before: ", studentPic)
+    // Set the image src attribute based on the selected row's data
+    if (studentPic === null || studentPic === undefined || studentPic === "None") {
+      $("#preview-image1").attr("src", "{{ url_for('static', filename='assets/default-picture.jpg') }}");
+    } else {
+      $("#preview-image1").attr("src", studentPic);
+    }
+    $("#editStudentForm input[name='image_url1']").val(studentPic); // Update the input field for image URL
+    
+    console.log(studentPic)
+    // Pre-select the correct option in the select field
+    $("#course").val(currentCourse);
+  
+    // Show the form for editing
+    
+    $("#editStudentModal").modal("show");
+  });
+
+  $("#editStudentForm").submit(function(event) {
+      event.preventDefault();
+
+      var studentId = $("#editStudentForm input[name='studentID']").val();
+      console.log("Old ID before appending:", studentId);
+      console.log("Form Data before submission:", $("#editStudentForm").serialize());
+      $("#editStudentForm").append('<input type="hidden" name="old_id" value="' + studentId + '">');
+      $("#editStudentForm").unbind('submit').submit();
+  });
+
+
+
+  //student details show
+  $(".table tbody tr").on("click", function (event) {
+    if ($(event.target).hasClass("row-button")) {
+      return; 
+    }
+    // Get the data from the clicked row
+    var studentPic = $(this).find(".img").attr('src');
+    var studentID = $(this).find(".id").text();
+    var firstName = $(this).find(".firstname").text();
+    var lastName = $(this).find(".lastname").text();
+    var course = $(this).find(".course").text();
+    var year = $(this).find(".year").text();
+    var gender = $(this).find(".gender").text();
+
+    // Populate the modal with the student data
+    $("#detailsStudentPic").attr('src',studentPic);
+    $("#detailsStudentID").text(studentID);
+    $("#detailsFirstName").text(firstName);
+    $("#detailsLastName").text(lastName);
+    $("#detailsCourse").text(course);
+    $("#detailsYear").text(year);
+    $("#detailsGender").text(gender);
+
+    // Show the modal
+    $("#studentDetailsModal").modal("show");
+  });
+
+});
+
+//-----
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  var form = document.getElementById("editStudentForm");
+
+       
+  form.addEventListener("submit", function (event) {
+    var studentIDInput = document.getElementById("studentID");
+    var inputValue = studentIDInput.value;
+    var regex = /^\d{4}-\d{4}$/;  // Regular expression for the format YYYY-NNNN
+
+    if (!regex.test(inputValue)) {
+      event.preventDefault();
+      alert("Invalid ID format. Please use the format: YYYY-NNNN (e.g., 2023-1234)");
+    }
+
+
+    
+});   
+ 
+  
+});
+
+//--- Cloudinary
+//$("input.cloudinary-fileupload[type=file]").cloudinary_fileupload();
+
+// for add
+
+function validateFileType(file) {
+  var idxDot = file.name.lastIndexOf(".") + 1;
+  var extFile = file.name.substr(idxDot, file.name.length).toLowerCase();
+  
+  if (extFile == "jpg" || extFile == "jpeg" || extFile == "png" || extFile == "gif") {
+    if (file.size <= 1048576) {
+      return true;
+    } else {
+      alert("File size exceeds 1MB. Please choose a smaller file.");
+      return false;
+    }
+  } else {
+    alert("Only jpg, jpeg, png, and gif files are allowed!");
+    return false;
+  }
+}
+
+
+
+function previewImage(event, inputElement) {
+  const file = event.target.files[0];
+  const preview = document.getElementById('preview-image');
+
+  // accept images only
+  if (validateFileType(file)) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block'; // Show the preview image
+      preview.style.opacity = file ? '1' : '0.5'; // Set opacity based on file selection
+    }
+    reader.readAsDataURL(file);
+  }
+}
+
+// for edit
+function previewImage1(event) {
+  const file1 = event.target.files[0];
+  const reader1 = new FileReader();
+  const preview1 = document.getElementById('preview-image1');
+
+  reader1.onload = function (e) {
+    if (file1) {
+      if (validateFileType(file1)) {
+        preview1.src = e.target.result;
+        preview1.style.display = 'block'; // Show the preview image
+        preview1.style.opacity = '1'; // Set opacity to 1 for the selected image
+        preview1.dataset.studentPic = file1.name; // Set data-student-pic attribute
+      } else {
+        // If the file doesn't pass validation, show the current image
+        if (currentImage) {
+          preview1.src = currentImage;
+          preview1.style.opacity = '1'; // Set opacity to 1 for the current image
+        } else {
+          // If no current image is available, show the default image
+          preview1.src = "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+          preview1.style.opacity = '0.8'; // Set opacity back to default for the default image
+        }
+      }
+    } else {
+      // If no file is selected, show the current image or default image
+      if (currentImage) {
+        preview1.src = currentImage;
+        preview1.style.opacity = '1'; // Set opacity to 1 for the current image
+      } else {
+        preview1.src = "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+        preview1.style.opacity = '0.8'; // Set opacity back to default for the default image
+      }
+    }
+  };
+
+
+
+  reader1.readAsDataURL(file1);
+}
+
+
+</script>
+
+
+
+
+{% endblock %}
+  

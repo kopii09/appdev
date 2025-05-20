@@ -1,0 +1,12 @@
+{
+  "name": "ssis_webapp-main",
+  "version": "1.0.0",
+  "description": "The Student Information System is a straightforward web application designed to easily handle student data. It allows users to perform basic CRUDL operations (Create, Read, Update, Delete, and List) for students, courses, and colleges.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
