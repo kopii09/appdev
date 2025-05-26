@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 from SSIS_Web.course.course_model import CourseManager
 from flask_mysql_connector import MySQL
 from SSIS_Web.course.forms import CourseForm
+from SSIS_Web.extensions import csrf
 
 mysql = MySQL()
 CourseManager.init_db(mysql)  
@@ -24,24 +25,52 @@ def list_courses():
 
     return render_template('course.html', course_data=course_data, form=form, colleges=colleges)
 
+
+
 @course_bp.route('/courses/add', methods=['GET', 'POST'])
+@csrf.exempt
 def add_course():
     form = CourseForm()
-    if request.method == 'POST' and form.validate_on_submit():
-        # Get data from the form submission
+    
+    if request.method == 'POST':
+        print("Form data received:", request.form)  # Add this line
+        
+        # TEMP: bypass validation to test Postman form-data
         code = request.form.get('code').upper()
         name = request.form.get('name')
         college = request.form.get('college')
-        
+
+        if not (code and name and college):
+            flash('All fields are required.', 'error')
+            return redirect(url_for('course.list_courses'))
+
         if CourseManager.add_course(code, name, college) == Exception:
             flash('Error adding course. Please try again.', 'error')
         else:
             flash(f'Course {code} added successfully!', 'success')
+
         return redirect(url_for('course.list_courses'))
-        #except Exception as e:
-         #   print(f"Error adding course: {e}")
-          #  flash('Error adding course. Please try again.', 'error')
+
     return render_template('course.html', form=form)
+
+
+@course_bp.route('/api/courses', methods=['POST'])
+@csrf.exempt
+def api_add_course():
+    try:
+        data = request.get_json()
+        code = data.get('code').upper()
+        name = data.get('name')
+        college = data.get('college')
+
+        result = CourseManager.add_course(code, name, college)
+        if not result:
+            return jsonify({"error": "Error adding course. Possibly duplicate code."}), 400
+
+        return jsonify({"message": f"Course {code} added successfully!"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @course_bp.route('/courses/delete/<string:code>', methods=['POST'])
 def delete_course(code):
@@ -59,17 +88,20 @@ def edit_course(code):
     return render_template('course.html', course=course, existing_code=code)  
     
 @course_bp.route('/courses/edit/', methods=['POST'])
+@csrf.exempt
 def edit_course_data():
-    form = CourseForm() 
-    #form_data = request.form
-    #print("Form Data received:", form_data)
+    form = CourseForm()
+
     updated_data = {
         'new_code': request.form.get('code').upper(),
         'name': request.form.get('name'),
         'college': request.form.get('college'), 
         'old_code': request.form.get('old_code')
     }
-    if CourseManager.update_course( **updated_data) == Exception:
+
+    print("Received update data:", updated_data)  # 👈 Add this line for debugging
+
+    if CourseManager.update_course(**updated_data) == Exception:
         flash('Error saving course, duplicate code. Please try again.', 'error')
     else:
         flash(f'Course {updated_data["new_code"]} updated successfully!', 'success')

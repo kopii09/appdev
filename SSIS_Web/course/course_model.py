@@ -33,20 +33,21 @@ class CourseManager:
     @classmethod
     def add_course(cls, code, name, college):
         try:
-            # Check if the course with the given ID already exists
             cur = cls.mysql.connection.cursor()
             cur.execute("SELECT * FROM course WHERE `code` = %s", (code,))
             if cur.fetchone():
                 print(f"Course with ID '{code}' already exists.")
-                return Exception
+                return False  # <-- Proper failure indicator
             else:
-                # Insert a new course into the database
                 cur.execute("INSERT INTO course (`code`, `name`, `college`) VALUES (%s, %s, %s)",
                             (code, name, college))
                 cls.mysql.connection.commit()
                 print(f"Course '{code}' has been added.")
+                return True  # <-- Success indicator
         except Exception as e:
             print(f"Error adding course: {e}")
+            return False
+
             
     @classmethod
     def delete_course(cls, code):
@@ -79,22 +80,27 @@ class CourseManager:
     @classmethod
     def update_course(cls, old_code, new_code, name, college):
         try:
+            print("Inside update_course")  # 👈 Log 1
+            print("Old:", old_code, "| New:", new_code, "| Name:", name, "| College:", college)  # 👈 Log 2
+
             cur = cls.mysql.connection.cursor()
             cur.execute("SELECT * FROM course WHERE `code` = %s", (new_code,))
             if cur.fetchone():
                 if old_code == new_code:
-                    pass 
+                    print("Updating course — same code.")  # 👈 Log 3
+                    pass
                 else:
-                    print(f"Student with ID '{new_code}' already exists.")
+                    print(f"Duplicate code '{new_code}' exists.")  # 👈 Log 4
                     return Exception
-            else:
-                cur.execute("UPDATE course SET `code`=%s,  `name` = %s, `college` = %s WHERE `code` = %s",
-                            (new_code, name, college, old_code))
-                cls.mysql.connection.commit()
-                return True
+            cur.execute("UPDATE course SET `code`=%s, `name`=%s, `college`=%s WHERE `code`=%s",
+                        (new_code, name, college, old_code))
+            cls.mysql.connection.commit()
+            print("Update successful!")  # 👈 Log 5
+            return True
         except Exception as e:
-            print(f"Error updating courset: {e}")
+            print(f"Error updating course: {e}")
         return False
+
 
 
     @classmethod
