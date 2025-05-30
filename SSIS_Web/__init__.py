@@ -2,7 +2,7 @@ from flask import Flask
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, SECRET_KEY, CLOUD_NAME, CLOUD_APIKEY, CLOUDINARY_SECRET
 import cloudinary
 
-from SSIS_Web.extensions import csrf, mysql, bootstrap  # ✅ import shared instances
+from SSIS_Web.extensions import csrf, mysql, bootstrap  
 
 from SSIS_Web.student.student_model import StudentManager
 
@@ -19,9 +19,9 @@ def create_app(test_config=None):
     )
 
     cloudinary.config(
-        cloud_name=CLOUD_NAME,
-        api_key=CLOUD_APIKEY,
-        api_secret=CLOUDINARY_SECRET,
+        cloud_name= "dkxbgqdjl",
+        api_key= "568291822549319",
+        api_secret= "tkwLUcIojJPXEk75jom4HCovsIo",
         secure=True
     )
 

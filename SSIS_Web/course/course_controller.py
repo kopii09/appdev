@@ -10,6 +10,7 @@ course_bp = Blueprint('course', __name__)
 
 
 @course_bp.route('/courses', methods=['GET', 'POST'])
+@csrf.exempt
 def list_courses():
     form = CourseForm()
     colleges = CourseManager.get_colleges()
@@ -83,6 +84,7 @@ def delete_course(code):
         flash('Error deleting course. Please try again.', 'error')
         
 @course_bp.route('/courses/edit/<string:code>', methods=['GET'])
+@csrf.exempt
 def edit_course(code):
     course = CourseManager.get_course_by_code(code)
     return render_template('course.html', course=course, existing_code=code)  
