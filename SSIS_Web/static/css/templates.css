@@ -15,7 +15,7 @@ body {
 }
 
 .table-container{
-  height: 450px; 
+  height: 1000px; 
   overflow: auto;
   border-radius: 15px;
 }
