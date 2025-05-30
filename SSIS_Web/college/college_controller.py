@@ -70,8 +70,6 @@ def delete_college(code):
 @csrf.exempt
 def edit_college(code):
     college = CollegeManager.get_college_by_code(code)
-    college_data = CollegeManager.get_college_data()
-    form = CollegeForm()
     return render_template('college.html', form=form, college_data=college_data, existing_code=code, college=college)
 
 
