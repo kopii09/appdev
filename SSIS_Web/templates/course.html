@@ -8,12 +8,27 @@
   {{ super() }}
 {% endblock %}
 
+<!-- Navigation Links (inside container and above student section) -->
+<div class="container" style="margin-top: 20px; text-align: center;">
+  <div style="background-color: #800000; padding: 10px 20px; border-radius: 8px;">
+    <div style="display: flex; gap: 30px;">
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/students" style="color: white; text-decoration: none;">Student</a>
+      </h1>
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/courses" style="color: white; text-decoration: none;">Course</a>
+      </h1>
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/colleges" style="color: white; text-decoration: none;">College</a>
+      </h1>
+    </div>
+  </div>
+</div>
+
 <div class="container mt-2">
   <!-- Search bar and Add button row -->
   <div class="row mb-3">
-    <div class="col">
-      <h1 class="header">Courses</h1> 
-    </div>
+
     <div class="col mt-auto">
       <!-- Button to trigger the modal -->
       <button type="button" class="btn btn-outline-info" id="addButton">
@@ -117,6 +132,7 @@
         {% endfor %}
       </tbody>
     </table>
+    
   </div>
 </div>
 

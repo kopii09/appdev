@@ -7,14 +7,36 @@
 {% block scripts %}
   {{ super() }}
 {% endblock %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+
+<!-- Navigation Links (inside container and above student section) -->
+<div class="container" style="margin-top: 20px; text-align: center;">
+  <div style="background-color: #800000; padding: 10px 20px; border-radius: 8px;">
+    <div style="display: flex; gap: 30px;">
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/students" style="color: white; text-decoration: none;">Student</a>
+      </h1>
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/courses" style="color: white; text-decoration: none;">Course</a>
+      </h1>
+      <h1 style="font-size: 40px; margin: 0;">
+        <a href="/colleges" style="color: white; text-decoration: none;">College</a>
+      </h1>
+    </div>
+  </div>
+</div>
 
 <div class="container mt-2">
   <!-- Search bar and Add button row -->
-  <div class="row mb-3">
-    <div class="col">
-      <h1 class="header">
-        Students</h1> 
-    </div>
+  <div class="row" style="display: flex; gap: 20px;align-items: center;  margin-top: 40px;">
+
     <div class="col mt-auto">
       <!-- Button to trigger the modal -->
       <button type="button" class="btn btn-outline-info" id="addButton">
@@ -144,6 +166,42 @@
         {% endfor %}
       </tbody>
     </table>
+    <!-- Pagination Controls -->
+    <nav aria-label="Student pagination">
+      <ul class="pagination justify-content-center">
+
+        <!-- Previous button -->
+        {% if page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('student.list_students', page=page-1) }}">Previous</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+          </li>
+        {% endif %}
+
+        <!-- Page numbers -->
+        {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('student.list_students', page=p) }}">{{ p }}</a>
+          </li>
+        {% endfor %}
+
+        <!-- Next button -->
+        {% if page < total_pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('student.list_students', page=page+1) }}">Next</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <span class="page-link">Next</span>
+          </li>
+        {% endif %}
+
+      </ul>
+    </nav>
+
   </div>
 </div>
 
@@ -320,49 +378,61 @@
 
         
     
-  <!-- Add Student Modal -->
-  <div
-    class="modal fade"
-    id="addStudentModal"
-    tabindex="-1"
-    role="dialog"
-    aria-labelledby="addStudentModalLabel"
-    aria-hidden="true"
+ <!-- Add Student Modal -->
+<div
+  class="modal fade"
+  id="addStudentModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="addStudentModalLabel"
+  aria-hidden="true"
 >
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="addStudentModalLabel">
-            Add New Student
-          </h5>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addStudentModalLabel">Add New Student</h5>
+      </div>
+      <div class="modal-body">
+        <div id="duplicateError" class="alert alert-danger" style="{% if duplicate_error %}display: block;{% else %}display: none;{% endif %}">
+          {{ duplicate_message or 'Student with this ID already exists.' }}
         </div>
-        <div class="modal-body">
-        <!-- Form to add a new student -->
-          <!-- HTML Form -->
-          <form id="addStudentForm" action="/students/add" method="POST" enctype="multipart/form-data">
-            <div class="row">
 
-              <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
-                <label for="file-input" style="cursor: pointer;">
-                  <div class="circle-container" style="position: relative;">
-                    <input type="file" id="file-input" name="pic" style="position: absolute; left: -9999px;" accept="image/*" onchange="previewImage(event, this)">
-
-                    <input id="image_url" name="image_url" hidden />
-
-                    <img src="{{ url_for('static', filename='assets/default-picture.jpg') }}" alt="default-pic" id="preview-image" style="opacity: 50%">
-                    <div class="change-image">
-                      <img src="{{ url_for('static', filename='assets/edit.png') }}" alt="change" id="change-image" style="transform: scale(0.6);">
-                    </div>
+        <form id="addStudentForm" action="{{ url_for('student.add_student') }}" method="POST" enctype="multipart/form-data">
+          <div class="row">
+            <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
+              <label for="file-input" style="cursor: pointer;">
+                <div class="circle-container" style="position: relative;">
+                  <input
+                    type="file"
+                    id="file-input"
+                    name="pic"
+                    style="position: absolute; left: -9999px;"
+                    accept="image/*"
+                    onchange="previewImage(event, this)"
+                  />
+                  <input id="image_url" name="image_url" hidden />
+                  <img
+                    src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
+                    alt="default-pic"
+                    id="preview-image"
+                    style="opacity: 50%"
+                  />
+                  <div class="change-image">
+                    <img
+                      src="{{ url_for('static', filename='assets/edit.png') }}"
+                      alt="change"
+                      id="change-image"
+                      style="transform: scale(0.6);"
+                    />
                   </div>
-                </label>
-              </div>
+                </div>
+              </label>
+            </div>
 
-                
-              
             <!-- ID Number -->
             <div class="row-md-6">
               <div class="form-group">
-              <label for="studentID">ID Number</label>
+                <label for="studentID">ID Number</label>
                 <input
                   type="text"
                   class="form-control"
@@ -370,6 +440,7 @@
                   name="studentID"
                   pattern="\d{4}-\d{4}"
                   required
+                  value="{{ form_data.studentID if form_data else '' }}"
                 />
                 <small id="idHelp" class="form-text text-muted" style="font-size: 12px;">
                   Format: YYYY-NNNN (e.g., 2023-1234)
@@ -377,114 +448,97 @@
               </div>
             </div>
 
-            <!-- First Name and Last Name in the Same Row -->
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-group mb-2">
-                <label for="firstName">First Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="firstName"
-                  name="firstName"
-                  required
-                />
+            <!-- First Name and Last Name -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group mb-2">
+                  <label for="firstName">First Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="firstName"
+                    name="firstName"
+                    required
+                    value="{{ form_data.firstName if form_data else '' }}"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group mb-2">
+                  <label for="lastName">Last Name</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="lastName"
+                    name="lastName"
+                    required
+                    value="{{ form_data.lastName if form_data else '' }}"
+                  />
+                </div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="form-group mb-2">
-                <label for="lastName">Last Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="lastName"
-                  name="lastName"
-                  required
-                />
-              </div>
-            </div>
-          </div>
 
-          <!-- Course, Year same Row -->
-          <div class="row">
-            <div class="col-md-9">
-              <div class="form-group mb-2">
-                <label for="course">Course</label>
-                <select class="form-select" id="course" name="course" required>
-                  <option value="" disabled selected class="disabled-option">Select a course</option>
-                  {% for course in courses %}
-                  <option value="{{ course.code }}">{{ course.name }}</option>
-                  {% endfor %}
-                </select>
+            <!-- Course and Year -->
+            <div class="row">
+              <div class="col-md-9">
+                <div class="form-group mb-2">
+                  <label for="course">Course</label>
+                  <select class="form-select" id="course" name="course" required>
+                    <option value="" disabled {% if not form_data %}selected{% endif %} class="disabled-option">Select a course</option>
+                    {% for course in courses %}
+                      <option value="{{ course.code }}" {% if form_data and form_data.course == course.code %}selected{% endif %}>{{ course.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="form-group mb-2">
+                  <label for="year">Year</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="year"
+                    name="year"
+                    required
+                    value="{{ form_data.year if form_data else '' }}"
+                  />
+                </div>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="form-group mb-2">
-                <label for="year">Year</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="year"
-                  name="year"
-                  required
-                />
-              </div>
-           
-          </div>    
 
+            <!-- Gender -->
             <div class="form-group mb-2">
-                <label for="gender">Gender</label>
-                <select
-                  class="form-select"
-                  id="gender"
-                  name="gender"
-                  required
-                >
-                  <option value="" disabled selected class="disabled-option">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Non-binary">Non-binary</option>
-                  <option value="Transgender">Transgender</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
-                  <option value="Not listed">Not listed</option>
-                </select>
-              </div>
+              <label for="gender">Gender</label>
+              <select class="form-select" id="gender" name="gender" required>
+                <option value="" disabled {% if not form_data %}selected{% endif %} class="disabled-option">Select gender</option>
+                {% set selected_gender = form_data.gender if form_data else None %}
+                <option value="Male" {% if selected_gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if selected_gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Non-binary" {% if selected_gender == 'Non-binary' %}selected{% endif %}>Non-binary</option>
+                <option value="Transgender" {% if selected_gender == 'Transgender' %}selected{% endif %}>Transgender</option>
+                <option value="Prefer not to say" {% if selected_gender == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
+                <option value="Not listed" {% if selected_gender == 'Not listed' %}selected{% endif %}>Not listed</option>
+              </select>
             </div>
-          
-        </form>
-
-            <!-- Hidden input fields to store form data -->
-            <input type="hidden" id="hiddenPicture" name="hiddenPicture"/>
-            <input type="hidden" id="hiddenIDNumber"name="hiddenIDNumber"/>
-            <input type="hidden" id="hiddenFirstName" name="hiddenFirstName" />
-            <input type="hidden" id="hiddenLastName" name="hiddenLastName"/>
-            <input type="hidden" id="hiddenCourse" name="hiddenCourse" />
-            <input type="hidden" id="hiddenYear" name="hiddenYear" />
-            <input type="hidden" id="hiddenGender" name="hiddenGender" />
 
             <!-- CSRF Token -->
-            {{ form.hidden_tag() }} 
+            {{ form.hidden_tag() }}
 
-            <!-- Modal footer with submit button -->
+            <!-- Modal footer -->
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                id="closeAddModalButton"
-                data-dismiss="modal"
-              >
+              <button type="button" class="btn btn-secondary" id="closeAddModalButton" data-dismiss="modal">
                 Close
               </button>
-              <button type="submit" class="btn btn-primary">
-                Add Student
-              </button>
+              <button type="submit" class="btn btn-primary">Add Student</button>
             </div>
           </form>
-        </div>
       </div>
     </div>
   </div>
 </div>
+
+
+
 
 <!-- Student Details Modal -->
 <div class="modal fade" id="studentDetailsModal" tabindex="-1" role="dialog" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
@@ -523,7 +577,6 @@
     </div>
   </div>
 </div>
-
 
 
 <script>
@@ -805,7 +858,6 @@ function previewImage1(event) {
 
 
 </script>
-
 
 
 

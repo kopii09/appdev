@@ -49,15 +49,27 @@ class CollegeManager:
             
     @classmethod
     def delete_college(cls, code):
+        try:
             cur = cls.mysql.connection.cursor()
-            cur.execute("SELECT * FROM college WHERE `code` = %s", (code,))
-            college = cur.fetchone()
 
-            if college:
-                # Delete the college from the database
-                print("Deleting college with ID:", code)
-                cur.execute("DELETE FROM college WHERE `code` = %s", (code,))
-                cls.mysql.connection.commit()
+            # Disassociate students from the college
+            cur.execute("UPDATE student_info SET college = NULL WHERE college = %s", (code,))
+            
+            # Disassociate courses from the college (if you have a college field in the course table)
+            cur.execute("UPDATE course SET college = NULL WHERE college = %s", (code,))
+            
+            # Now delete the college
+            cur.execute("DELETE FROM college WHERE code = %s", (code,))
+            
+            cls.mysql.connection.commit()
+            print(f"College {code} deleted successfully.")
+
+        except Exception as e:
+            print(f"Error deleting college: {e}")
+
+        finally:
+            cur.close()
+
 
     @classmethod
     def search_colleges(cls, field=None, query=None):

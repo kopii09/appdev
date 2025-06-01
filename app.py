@@ -1,7 +1,7 @@
 # app.py
 from SSIS_Web import create_app
 from dotenv import load_dotenv
-from SSIS_Web.extensions import csrf  # ✅ import from extensions
+from SSIS_Web.extensions import csrf  
 
 load_dotenv('.env')
 
