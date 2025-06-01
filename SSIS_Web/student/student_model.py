@@ -33,23 +33,45 @@ class StudentManager:
             return []
 
     @classmethod
+    @classmethod
     def add_student(cls, pic, id, firstname, lastname, course, gender, year):
         try:
-            # Check if the student with the given ID already exists
             cur = cls.mysql.connection.cursor()
+            
+            # Check duplicate
             cur.execute("SELECT * FROM student_info WHERE `id` = %s", (id,))
             if cur.fetchone():
-                print(f"Student with ID '{id}' already exists.")
-                return Exception
-            else:
-                # Insert a new student into the database
-                cur.execute("INSERT INTO student_info (`pic`, `id`, `firstname`, `lastname`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                            (pic, id, firstname, lastname, course, gender, year))
-                cls.mysql.connection.commit()
-                print(
-                    f"Student '{firstname} {lastname}' with ID '{id}' has been added.")
+                return {'status': 'error', 'message': f"Student with ID '{id}' already exists."}
+
+            # Handle pic file upload
+            filename = None
+            if pic:
+                filename = secure_filename(pic.filename)
+                upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                pic.save(upload_path)
+
+            # Insert student info into DB
+            cur.execute(
+                "INSERT INTO student_info (`pic`, `id`, `firstName`, `lastName`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (filename, id, firstname, lastname, course, gender, year)
+            )
+            cls.mysql.connection.commit()
+            return {'status': 'success', 'message': f"Student '{firstname} {lastname}' added successfully."}
         except Exception as e:
-            print(f"Error adding student: {e}")
+            return {'status': 'error', 'message': f"Error adding student: {e}"}
+
+
+    @classmethod
+    def is_duplicate(cls, studentID):
+        try:
+            cur = cls.mysql.connection.cursor()
+            cur.execute("SELECT * FROM student_info WHERE `id` = %s", (studentID,))
+            exists = cur.fetchone() is not None
+            cur.close()
+            return exists
+        except Exception as e:
+            print(f"Error checking duplicate: {e}")
+            return False
 
     @classmethod
     def delete_student(cls, student_id):
@@ -58,7 +80,6 @@ class StudentManager:
             cur.execute(
                 "SELECT * FROM student_info WHERE `id` = %s", (student_id,))
             student = cur.fetchone()
-
             if student:
                 # Delete the student from the database
                 print("Deleting student with ID:", student_id)
@@ -120,9 +141,43 @@ class StudentManager:
     @classmethod
     def get_student_by_id(cls, student_id):
         cur = cls.mysql.connection.cursor(dictionary=True)
-        cur.execute("SELECT * FROM student_info WHERE `id` = %s",
+        cur.execute("""SELECT * FROM student_info 
+        LEFT JOIN course ON course.code = student_info.course
+        LEFT JOIN college ON college.code = student_info.college""",
                     (student_id,))
         student = cur.fetchone()
         print
         cur.close()
         return student
+    
+    @classmethod
+    def get_student_data_paginated(cls, page, per_page):
+        offset = (page - 1) * per_page
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            query = """
+                SELECT * FROM student_info
+                INNER JOIN course ON course.code = student_info.course
+                LIMIT %s OFFSET %s
+            """
+            cur.execute(query, (per_page, offset))
+            result = cur.fetchall()
+            cur.close()
+            return result
+        except Exception as e:
+            print(f"Error fetching paginated students: {e}")
+            return []
+
+    @classmethod
+    def count_students(cls):
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            cur.execute("SELECT COUNT(*) AS count FROM student_info")
+            count = cur.fetchone()['count']
+            cur.close()
+            return count
+        except Exception as e:
+            print(f"Error counting students: {e}")
+            return 0
+        
+    

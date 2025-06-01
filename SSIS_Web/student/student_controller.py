@@ -6,6 +6,8 @@ from cloudinary import uploader
 from cloudinary.uploader import upload
 from cloudinary.utils import cloudinary_url
 from SSIS_Web.extensions import csrf
+from SSIS_Web.student.student_model import StudentManager
+
 
 mysql = MySQL()
 student_bp = Blueprint('student', __name__)
@@ -22,55 +24,84 @@ def list_students():
     form = StudentForm()
     courses = StudentManager.get_courses()
 
+    # Pagination parameters
+    page = request.args.get('page', 1, type=int)  # default to page 1
+    per_page = 10  # number of students per page, you can adjust
+
     if request.method == 'POST':
         search_field = request.form.get('searchField')
         search_query = request.form.get('searchInput')
-        # Perform search based on user input
+        # Perform search (you can extend pagination here too if needed)
         student_data = StudentManager.search_students(
             field=search_field, query=search_query)
     else:
-        # If no search input, retrieve all students
-        student_data = StudentManager.get_student_data()
+        # Retrieve paginated students instead of all
+        student_data = StudentManager.get_student_data_paginated(page=page, per_page=per_page)
 
-    return render_template('student.html', student_data=student_data, form=form, courses=courses)
+    # You also want to know total count for pagination UI
+    total_students = StudentManager.count_students()
 
+    total_pages = (total_students + per_page - 1) // per_page
+
+    return render_template('student.html',
+                           student_data=student_data,
+                           form=form,
+                           courses=courses,
+                           page=page,
+                           per_page=per_page,
+                           total_pages=total_pages)
+
+
+
+from flask import render_template, request, redirect, url_for, flash
 
 @student_bp.route('/students/add', methods=['GET', 'POST'])
-@csrf.exempt
 def add_student():
     form = StudentForm()
+    page = 1
+    per_page = 10
+    total_students = StudentManager.count_students()
+    total_pages = (total_students + per_page - 1) // per_page
 
     if request.method == 'POST':
-        if request.content_type.startswith('multipart/form-data'):
-            # Handle form submission (from browser or Postman)
-            student_pic = request.files.get('pic')
-            student_id = request.form.get('studentID')
-            first_name = request.form.get('firstName')
-            last_name = request.form.get('lastName')
-            course_code = request.form.get('course')
-            year = request.form.get('year')
-            gender = request.form.get('gender')
+        studentID = request.form.get('studentID')
 
-            if student_pic:
-                upload_result = upload(student_pic, folder="SSIS Web", resource_type='image')
-                secure_url = upload_result['secure_url']
-            else:
-                secure_url = None
-
-            result = StudentManager.add_student(secure_url, student_id, first_name, last_name, course_code, gender, year)
-            if result == Exception:
-                if request.headers.get('Accept') == 'application/json':
-                    return jsonify({'error': 'Duplicate ID'}), 400
-                flash('Error adding student, duplicate ID.', 'error')
-            else:
-                if request.headers.get('Accept') == 'application/json':
-                    return jsonify({'message': f'Student {student_id} added successfully!'}), 200
-                flash(f'Student {student_id} added successfully!', 'success')
+        if StudentManager.is_duplicate(studentID):
+            flash(f"Student with ID {studentID} already exists.", "danger")
             return redirect(url_for('student.list_students'))
-        else:
-            return jsonify({'error': 'Unsupported Content-Type'}), 400
 
-    return render_template('student.html', form=form)
+        pic = request.files.get('pic')
+        id = studentID
+        firstname = request.form.get('firstName')
+        lastname = request.form.get('lastName')
+        course = request.form.get('course')
+        gender = request.form.get('gender')
+        year = request.form.get('year')
+
+        if not all([id, firstname, lastname, course, gender, year]):
+            flash("Please fill in all required fields.", "danger")
+            return redirect(url_for('student.add_student'))
+
+        result = StudentManager.add_student(pic, id, firstname, lastname, course, gender, year)
+
+        if result['status'] == 'success':
+            flash(result['message'], 'success')
+        else:
+            flash(result['message'], 'danger')
+
+        # Redirect to first page of student list to see the new student
+        return redirect(url_for('student.list_students', page=1))
+
+    return render_template(
+        'student.html',
+        form=form,
+        courses=StudentManager.get_courses(),
+        student_data=StudentManager.get_student_data_paginated(page, per_page),
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages
+    )
+
 
 @student_bp.route('/students/delete/<string:student_id>', methods=['POST'])
 @csrf.exempt
