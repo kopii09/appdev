@@ -611,6 +611,7 @@
           </div>
           <div class="col-sm-6 text-left" style="padding-left: 20px">
             <div>Course: <strong><span id="detailsCourse"></span></strong></div>
+            <div>College: <strong><span id="detailsCollege"></span></strong></div>
             <div>Year: <strong><span id="detailsYear"></span></strong></div>
             <div>Gender: <strong><span id="detailsGender"></span></strong></div>
           </div>
@@ -776,6 +777,7 @@ $(document).ready(function () {
     var firstname = $(this).find(".firstname").text();
     var lastname = $(this).find(".lastname").text();
     var course = $(this).find(".course").text();
+    var college = $(this).find(".college").text();
     var year = $(this).find(".year").text();
     var gender = $(this).find(".gender").text();
 
@@ -785,6 +787,7 @@ $(document).ready(function () {
     $("#detailsFirstname").text(firstname);
     $("#detailsLastname").text(lastname);
     $("#detailsCourse").text(course);
+    $("#detailsCollege").text(college);
     $("#detailsYear").text(year);
     $("#detailsGender").text(gender);
 
