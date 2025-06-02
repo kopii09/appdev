@@ -125,24 +125,29 @@ class StudentManager:
     def update_student(cls, pic, old_id, new_id, firstname, lastname, course, gender, year):
         try:
             cur = cls.mysql.connection.cursor()
-            print(old_id)
-            cur.execute(
-                "SELECT * FROM student_info WHERE `id` = %s AND `id` != %s", (new_id, old_id))
-            if cur.fetchone():
-                if old_id == new_id:
-                    pass
-                else:
+
+            # Check if new_id is already taken by another student
+            if new_id != old_id:
+                cur.execute("SELECT COUNT(*) FROM student_info WHERE `id` = %s", (new_id,))
+                if cur.fetchone()[0] > 0:
                     print(f"Student with ID '{new_id}' already exists.")
-                    return Exception
-            else:
-                # Update student info
-                cur.execute("UPDATE student_info SET `pic`=%s, `id`=%s, `firstname` = %s, `lastname` = %s, `course` = %s, `gender` = %s, `year` = %s WHERE `id` = %s",
-                            (pic, new_id, firstname, lastname, course, gender, year, old_id))
-                cls.mysql.connection.commit()
-                return True
+                    return {'status': 'error', 'message': f"Student ID '{new_id}' is already in use."}
+
+            # Update the record
+            cur.execute("""
+                UPDATE student_info 
+                SET `pic`=%s, `id`=%s, `firstname`=%s, `lastname`=%s, 
+                    `course`=%s, `gender`=%s, `year`=%s 
+                WHERE `id`=%s
+            """, (pic, new_id, firstname, lastname, course, gender, year, old_id))
+            
+            cls.mysql.connection.commit()
+            return {'status': 'success', 'message': 'Student updated successfully.'}
+
         except Exception as e:
             print(f"Error updating student: {e}")
-        return False
+            return {'status': 'error', 'message': f"Error updating student: {e}"}
+
 
     @classmethod
     def get_student_data_paginated(cls, page, per_page):

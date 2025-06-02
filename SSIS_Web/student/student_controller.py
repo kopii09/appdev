@@ -121,36 +121,42 @@ def delete_student(student_id):
 def edit_student_data():
     form = StudentForm()
     pic = request.files.get('pic1')
+    
     if pic:
-        upload_result = upload(
-            pic, folder="SSIS Web", resource_type='image')
+        upload_result = upload(pic, folder="SSIS Web", resource_type='image')
         secure_url = upload_result['secure_url']
     else:
-        secure_url = None
-    gender = request.form.get('gender')
-    print("URL: ", secure_url)
+        secure_url = request.form.get('image_url1') or None  # fallback
+
+    new_id = request.form.get('studentID')
+    old_id = request.form.get('originalStudentID')  # Make sure form includes this hidden input!
+
+    # Check for duplicate only if new ID ≠ old ID
+    if new_id != old_id and StudentManager.is_duplicate(new_id):
+        flash(f"A student with ID {new_id} already exists.", "danger")
+        return redirect(url_for('student.list_students'))
 
     updated_data = {
         'pic': secure_url,
-        'new_id': request.form.get('studentID'),
+        'new_id': new_id,
         'firstname': request.form.get('firstname'),
         'lastname': request.form.get('lastname'),
         'course': request.form.get('course'),
         'year': request.form.get('year'),
         'gender': request.form.get('gender'),
-        'old_id': request.form.get('old_id')
+        'old_id': old_id
     }
 
     try:
         if StudentManager.update_student(**updated_data):
-            flash(
-                f'Student {updated_data["new_id"]} updated successfully!', 'success')
+            flash(f'Student {new_id} updated successfully!', 'success')
         else:
-            flash('Error saving student. Please try again.', 'error')
+            flash('Error saving student. Please try again.', 'danger')
     except Exception as e:
-        flash(f'Error: {e}', 'error')
-        # Log the exception for debugging purposes
+        flash(f'Error: {e}', 'danger')
+
     return redirect(url_for('student.list_students'))
+
 
 @student_bp.route('/students/<string:student_id>/photo', methods=['POST'])
 def update_student_photo(student_id):
