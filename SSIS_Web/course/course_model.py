@@ -34,21 +34,19 @@ class CourseManager:
     def add_course(cls, code, name, college):
         try:
             cur = cls.mysql.connection.cursor()
+            # Check duplicate
             cur.execute("SELECT * FROM course WHERE `code` = %s", (code,))
             if cur.fetchone():
-                print(f"Course with ID '{code}' already exists.")
-                return False  # <-- Proper failure indicator
-            else:
-                cur.execute("INSERT INTO course (`code`, `name`, `college`) VALUES (%s, %s, %s)",
-                            (code, name, college))
-                cls.mysql.connection.commit()
-                print(f"Course '{code}' has been added.")
-                return True  # <-- Success indicator
-        except Exception as e:
-            print(f"Error adding course: {e}")
-            return False
+                return {'status': 'error', 'message': f"Course with code '{code}' already exists."}
 
-            
+            cur.execute("INSERT INTO course (`code`, `name`, `college`) VALUES (%s, %s, %s)", (code, name, college))
+            cls.mysql.connection.commit()
+            return {'status': 'success', 'message': f"Course '{code}' has been added successfully."}
+        except Exception as e:
+            return {'status': 'error', 'message': f"Error adding course: {e}"}
+
+
+   
     @classmethod
     def delete_course(cls, code):
             cur = cls.mysql.connection.cursor()
@@ -111,3 +109,43 @@ class CourseManager:
             print
             cur.close()
             return course
+    
+    @classmethod
+    def get_course_data_paginated(cls, page, per_page):
+        offset = (page - 1) * per_page
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            query = "SELECT * FROM course LIMIT %s OFFSET %s"
+            cur.execute(query, (per_page, offset))
+            courses = cur.fetchall()
+            cur.close()
+            return courses
+        except Exception as e:
+            print(f"Error fetching paginated courses: {e}")
+            return []
+
+
+    @classmethod
+    def count_courses(cls):
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            cur.execute("SELECT COUNT(*) AS count FROM courses")
+            count = cur.fetchone()['count']
+            cur.close()
+            return count
+        except Exception as e:
+            print(f"Error counting courses: {e}")
+            return 0
+
+    @classmethod
+    def is_duplicate(cls, code):
+        try:
+            cur = cls.mysql.connection.cursor()
+            cur.execute("SELECT COUNT(*) FROM course WHERE code = %s", (code,))
+            count = cur.fetchone()[0]
+            cur.close()
+            return count > 0
+        except Exception as e:
+            print("Error checking duplicate course code:", e)
+            return False
+
