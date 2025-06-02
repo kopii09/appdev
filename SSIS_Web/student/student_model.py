@@ -32,7 +32,7 @@ class StudentManager:
             print(f"Error fetching course: {e}")
             return []
 
-    @classmethod
+   
     @classmethod
     def add_student(cls, pic, id, firstname, lastname, course, gender, year):
         try:
