@@ -15,9 +15,16 @@ def list_courses():
     page = int(request.args.get('page', 1))
     per_page = 10
 
+    # Get search parameters from POST or query string
     if request.method == 'POST':
-        search_field = request.form.get('searchField')  
-        search_query = request.form.get('searchInput')  
+        search_field = request.form.get('searchField', 'all')
+        search_query = request.form.get('searchInput', '')
+        return redirect(url_for('course.list_courses', searchField=search_field, searchInput=search_query))
+
+    search_field = request.args.get('searchField', 'all')
+    search_query = request.args.get('searchInput', '')
+
+    if search_query:
         course_data = CourseManager.search_courses(field=search_field, query=search_query)
         total_courses = len(course_data)
         total_pages = (total_courses + per_page - 1) // per_page
@@ -33,7 +40,9 @@ def list_courses():
         form=form,
         colleges=CourseManager.get_colleges(),
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        search_field=search_field,
+        search_query=search_query
     )
 
 

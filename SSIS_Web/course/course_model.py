@@ -125,17 +125,19 @@ class CourseManager:
             return []
 
 
+
     @classmethod
     def count_courses(cls):
         try:
             cur = cls.mysql.connection.cursor(dictionary=True)
-            cur.execute("SELECT COUNT(*) AS count FROM courses")
+            cur.execute("SELECT COUNT(*) AS count FROM course")  # <--- fix here
             count = cur.fetchone()['count']
             cur.close()
             return count
         except Exception as e:
             print(f"Error counting courses: {e}")
             return 0
+
 
     @classmethod
     def is_duplicate(cls, code):
