@@ -72,8 +72,8 @@ def add_student():
 
         pic = request.files.get('pic')
         id = studentID
-        firstname = request.form.get('firstName')
-        lastname = request.form.get('lastName')
+        firstname = request.form.get('firstname')
+        lastname = request.form.get('lastname')
         course = request.form.get('course')
         gender = request.form.get('gender')
         year = request.form.get('year')
@@ -132,8 +132,8 @@ def edit_student_data():
     updated_data = {
         'pic': secure_url,
         'new_id': request.form.get('studentID'),
-        'firstname': request.form.get('firstName'),
-        'lastname': request.form.get('lastName'),
+        'firstname': request.form.get('firstname'),
+        'lastname': request.form.get('lastname'),
         'course': request.form.get('course'),
         'year': request.form.get('year'),
         'gender': request.form.get('gender'),

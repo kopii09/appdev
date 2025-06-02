@@ -1,4 +1,8 @@
 from flask_mysql_connector import MySQL
+from werkzeug.utils import secure_filename
+import os
+from flask import current_app as app
+
 
 
 class StudentManager:
@@ -52,7 +56,7 @@ class StudentManager:
 
             # Insert student info into DB
             cur.execute(
-                "INSERT INTO student_info (`pic`, `id`, `firstName`, `lastName`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                "INSERT INTO student_info (`pic`, `id`, `firstname`, `lastname`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (filename, id, firstname, lastname, course, gender, year)
             )
             cls.mysql.connection.commit()
@@ -139,18 +143,6 @@ class StudentManager:
         return False
 
     @classmethod
-    def get_student_by_id(cls, student_id):
-        cur = cls.mysql.connection.cursor(dictionary=True)
-        cur.execute("""SELECT * FROM student_info 
-        LEFT JOIN course ON course.code = student_info.course
-        LEFT JOIN college ON college.code = student_info.college""",
-                    (student_id,))
-        student = cur.fetchone()
-        print
-        cur.close()
-        return student
-    
-    @classmethod
     def get_student_data_paginated(cls, page, per_page):
         offset = (page - 1) * per_page
         try:
@@ -158,6 +150,7 @@ class StudentManager:
             query = """
                 SELECT * FROM student_info
                 INNER JOIN course ON course.code = student_info.course
+                ORDER BY student_info.id DESC
                 LIMIT %s OFFSET %s
             """
             cur.execute(query, (per_page, offset))
@@ -167,6 +160,24 @@ class StudentManager:
         except Exception as e:
             print(f"Error fetching paginated students: {e}")
             return []
+
+    @classmethod
+    def get_student_by_id(cls, student_id):
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            cur.execute("""
+                SELECT * FROM student_info 
+                LEFT JOIN course ON course.code = student_info.course
+                LEFT JOIN college ON college.code = student_info.college
+                WHERE student_info.id = %s
+            """, (student_id,))
+            student = cur.fetchone()
+            cur.close()
+            return student
+        except Exception as e:
+            print(f"Error fetching student by id: {e}")
+            return None
+
 
     @classmethod
     def count_students(cls):
