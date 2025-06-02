@@ -9,6 +9,8 @@ from SSIS_Web.extensions import csrf
 from SSIS_Web.student.student_model import StudentManager
 
 
+
+
 mysql = MySQL()
 student_bp = Blueprint('student', __name__)
 StudentManager.init_db(mysql)
@@ -66,33 +68,69 @@ def add_student():
 
     if request.method == 'POST':
         studentID = request.form.get('studentID')
-
-        if StudentManager.is_duplicate(studentID):
-            flash(f"Student with ID {studentID} already exists.", "danger")
-            return redirect(url_for('student.list_students'))
-
-        pic = request.files.get('pic')
-        id = studentID
         firstname = request.form.get('firstname')
         lastname = request.form.get('lastname')
         course = request.form.get('course')
         gender = request.form.get('gender')
         year = request.form.get('year')
+        pic = request.files.get('pic')
 
-        if not all([id, firstname, lastname, course, gender, year]):
+        # Check if all required fields are filled
+        if not all([studentID, firstname, lastname, course, gender, year]):
             flash("Please fill in all required fields.", "danger")
-            return redirect(url_for('student.add_student'))
+            return render_template(
+                'student.html',
+                form=form,
+                courses=StudentManager.get_courses(),
+                student_data=StudentManager.get_student_data_paginated(page, per_page),
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                duplicate_error=True,
+                duplicate_message="Please fill in all required fields.",
+                form_data=request.form
+            )
 
-        result = StudentManager.add_student(pic, id, firstname, lastname, course, gender, year)
+        # Check for duplicate student ID
+        if StudentManager.is_duplicate(studentID):
+            flash(f"Student with ID {studentID} already exists.", "danger")
+            return render_template(
+                'student.html',
+                form=form,
+                courses=StudentManager.get_courses(),
+                student_data=StudentManager.get_student_data_paginated(page, per_page),
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                duplicate_error=True,
+                duplicate_message=f"Student with ID {studentID} already exists.",
+                form_data=request.form
+            )
+
+        # Add student using your existing logic
+        result = StudentManager.add_student(pic, studentID, firstname, lastname, course, gender, year)
 
         if result['status'] == 'success':
             flash(result['message'], 'success')
+            # Redirect to first page of student list to see the new student
+            return redirect(url_for('student.list_students', page=1))
         else:
             flash(result['message'], 'danger')
+            # Re-render form with message if add failed
+            return render_template(
+                'student.html',
+                form=form,
+                courses=StudentManager.get_courses(),
+                student_data=StudentManager.get_student_data_paginated(page, per_page),
+                page=page,
+                per_page=per_page,
+                total_pages=total_pages,
+                duplicate_error=True,
+                duplicate_message=result['message'],
+                form_data=request.form
+            )
 
-        # Redirect to first page of student list to see the new student
-        return redirect(url_for('student.list_students', page=1))
-
+    # GET request just render empty form
     return render_template(
         'student.html',
         form=form,
@@ -102,6 +140,7 @@ def add_student():
         per_page=per_page,
         total_pages=total_pages
     )
+
 
 
 @student_bp.route('/students/delete/<string:student_id>', methods=['POST'])
@@ -120,36 +159,36 @@ def delete_student(student_id):
 @csrf.exempt
 def edit_student_data():
     form = StudentForm()
-    pic = request.files.get('pic1')
-    
-    if pic:
+
+    # Get uploaded picture and existing picture URL
+    pic = request.files.get('pic1')  # New uploaded file
+    existing_pic_url = request.form.get('image_url1')  # Existing Cloudinary image URL
+
+    # ✅ Get the student ID from the hidden field in the form
+    student_id = request.form.get('originalStudentID')  # <--- Make sure this is present in the form
+
+    # Upload new image if available
+    if pic and pic.filename != '':
         upload_result = upload(pic, folder="SSIS Web", resource_type='image')
-        secure_url = upload_result['secure_url']
+        new_pic_url = upload_result['secure_url']
     else:
-        secure_url = request.form.get('image_url1') or None  # fallback
-
-    new_id = request.form.get('studentID')
-    old_id = request.form.get('originalStudentID')  # Make sure form includes this hidden input!
-
-    # Check for duplicate only if new ID ≠ old ID
-    if new_id != old_id and StudentManager.is_duplicate(new_id):
-        flash(f"A student with ID {new_id} already exists.", "danger")
-        return redirect(url_for('student.list_students'))
+        new_pic_url = existing_pic_url or None
 
     updated_data = {
-        'pic': secure_url,
-        'new_id': new_id,
+        'pic': new_pic_url,
         'firstname': request.form.get('firstname'),
         'lastname': request.form.get('lastname'),
         'course': request.form.get('course'),
         'year': request.form.get('year'),
         'gender': request.form.get('gender'),
-        'old_id': old_id
+        'id': student_id  # ✅ Must not be blank
     }
+
+    print("Updating with data:", updated_data)
 
     try:
         if StudentManager.update_student(**updated_data):
-            flash(f'Student {new_id} updated successfully!', 'success')
+            flash(f'Student {student_id} updated successfully!', 'success')
         else:
             flash('Error saving student. Please try again.', 'danger')
     except Exception as e:
@@ -158,17 +197,18 @@ def edit_student_data():
     return redirect(url_for('student.list_students'))
 
 
+
+
 @student_bp.route('/students/<string:student_id>/photo', methods=['POST'])
 def update_student_photo(student_id):
     pic = request.files.get('photo')
-    if not pic:
+    if not pic or pic.filename == '':
         return jsonify({"error": "No image uploaded"}), 400
 
     try:
         upload_result = upload(pic, folder="SSIS Web", resource_type='image')
         secure_url = upload_result['secure_url']
 
-        # Fetch student to get other values
         student = StudentManager.get_student_by_id(student_id)
         if not student:
             return jsonify({"error": "Student not found"}), 404
@@ -186,6 +226,7 @@ def update_student_photo(student_id):
         return jsonify({"message": "Photo updated", "url": secure_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @student_bp.route('/students/edit/<string:student_id>', methods=['GET'])
 def show_edit_student_form(student_id):

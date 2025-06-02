@@ -107,12 +107,13 @@
           <!-- Data for each column -->
           <td scope="row">
             <div class="circle-con">
-              <img class="img" src="{% if student.pic is not defined or student.pic is none %}
+              <img class="img" src="{% if not student.pic %}
                 {{ url_for('static', filename='assets/default-picture.jpg') }}
                 {% else %}
-                  {{ student.pic }}
-                {% endif %}"
+                {{ student.pic }}?v={{ range(1000000)|random }}
+                {% endif %}" 
                 style="height:55px; width:55px;"/>
+
             </div>
           </td>
           <td class="id">{{ student.id }}</td>
@@ -253,137 +254,78 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-      <h5 class="modal-title" id="editStudentModalLabel">Edit Student</h5>
+        <h5 class="modal-title" id="editStudentModalLabel">Edit Student</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
+      <!-- Modal body -->
       <div class="modal-body">
-        <!-- Form to edit an existing student -->
-        <form
-          action="/students/edit/"
-          method="POST"
-          class="editStudentForm"
-          id="editStudentForm"
-          enctype="multipart/form-data"
-        >
-          <!-- Input fields for student information -->
-          <div class="row">
+        <form id="editStudentForm" action="{{ url_for('student.edit_student_data') }}" method="POST" enctype="multipart/form-data">
 
-            <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
-              <label for="file-input1" style="cursor: pointer;">
-                <div class="circle-container1" style="position: relative;">
-                  <input type="file" id="file-input1" name="pic1" style="position: absolute; left: -9999px;" accept="image/*" onchange="previewImage1(event)">
-                  <input id="image_url1" name="image_url1 " hidden />
-            
-                  <img 
-                    alt="default-pic" 
-                    src="{{ url_for('static', filename='assets/default-picture.jpg') }}" 
-                    id="preview-image1"
-                
-                    data-default-pic="true"
-                    style="opacity: 80%" 
-                  />
-                  
-                  <div class="change-image">
-                    <img src="{{ url_for('static', filename='assets/edit.png') }}" alt="change" id="change-image" style="transform: scale(0.6);">
-                  </div>
-                </div>
-              </label>
-            </div>
-          </div>
-            
-
-         
-
-            <!-- ID Number -->
-          <div class="row-md-6">
-            <div class="form-group">
-              <label for="studentID">ID Number</label>
-              <input
-                type="text"
-                class="form-control"
-                id="studentID"
-                name="studentID"
-                pattern="\d{4}-\d{4}"
-                value="{{ existing_id  }}"
-                
-                
-                required
+          <!-- Centered Profile Image Preview -->
+          <div class="text-center mb-4">
+            <label for="file-input1" style="cursor: pointer; display: inline-block;">
+              <input type="file" id="file-input1" name="pic1" class="d-none" accept="image/*" onchange="previewImage1(event)">
+              <input id="image_url1" name="image_url1" type="hidden">
+              <img 
+                id="preview-image1"
+                src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
+                alt="student-pic"
+                class="rounded-circle shadow"
+                style="width: 130px; height: 130px; object-fit: cover; opacity: 0.9; display: block; margin-left: auto; margin-right: auto;"
               />
-                <small id="idHelp" class="form-text text-muted">
-                  Format: YYYY-NNNN (e.g., 2023-1234)
-                </small>
-            </div>
+            </label>
           </div>
 
-          <!-- First Name and Last Name in the Same Row -->
+          <!-- ID Number -->
+          <div class="form-group mb-3">
+            <label for="idnumber"><strong>ID Number:</strong></label>
+            <input type="text" id="idnumber" name="studentID" class="form-control" pattern="\d{4}-\d{4}" required readonly />
+            <small class="form-text text-muted">Format: YYYY-NNNN (e.g., 2023-1234)</small>
+          </div>
+
+          <!-- First and Last Name -->
           <div class="row">
             <div class="col-md-6">
-              <div class="form-group mb-2">
+              <div class="form-group">
                 <label for="firstname">First Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="firstname"
-                  name="firstname"
-                  data-student-id=""
-                  required
-                />
+                <input type="text" class="form-control" id="firstname" name="firstname" required>
               </div>
             </div>
-          
-              <div class="col-md-6">
-                <div class="form-group mb-2">
-                  <label for="lastname">Last Name</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="lastname"
-                    name="lastname"
-                    data-student-id=""
-                    required
-                  />
-                </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="lastname">Last Name</label>
+                <input type="text" class="form-control" id="lastname" name="lastname" required>
               </div>
+            </div>
           </div>
 
-          <!-- Course, Year same Row -->
+          <!-- Course and Year -->
           <div class="row">
             <div class="col-md-9">
-              <div class="form-group mb-2">
+              <div class="form-group">
                 <label for="course">Course</label>
-                <select
-                  type="text"
-                  class="form-select"
-                  id="course"
-                  name="course"
-                  data-student-id=""
-                  required
-                >
-                {% for course in courses %}
-                  <option value="{{ course.code }}">{{ course.name }}</option>
-                {% endfor %}
+                <select class="form-select" id="course" name="course" required>
+                  {% for course in courses %}
+                    <option value="{{ course.code }}">{{ course.name }}</option>
+                  {% endfor %}
                 </select>
               </div>
             </div>
-                
             <div class="col-md-3">
-              <div class="form-group mb-2">
+              <div class="form-group">
                 <label for="year">Year</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="year"
-                  name="year"
-                  data-student-id=""
-                  required
-                />
+                <input type="number" class="form-control" id="year" name="year" required>
               </div>
             </div>
           </div>
 
-          <div class="form-group mb-2">
+          <!-- Gender -->
+          <div class="form-group">
             <label for="gender">Gender</label>
             <select class="form-select" id="gender" name="gender" required>
-              <option value="" disabled selected class="disabled-option" >Select gender</option>
+              <option value="" disabled selected>Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Non-binary">Non-binary</option>
@@ -392,193 +334,129 @@
               <option value="Not listed">Not listed</option>
             </select>
           </div>
-         
-          <!-- Hidden input field to store the current course -->
-          <input type="hidden" id="currentCourse" name="currentCourse" />
 
           <!-- CSRF Token -->
           {{ form.hidden_tag() }}
 
-          <!-- Modal footer with submit button -->
+          <!-- Hidden originalStudentID -->
+          <input type="hidden" id="originalStudentID" name="originalStudentID" value="">
+
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              id="closeEditModalButton"
-              data-dismiss="modal"
-            >
-              Close
-            </button>
+            <button type="button" class="btn btn-secondary" id="closeEditModalButton" data-dismiss="modal">Close</button>
             <button type="submit" class="btn btn-primary">Save Changes</button>
           </div>
-          
+
         </form>
       </div>
     </div>
   </div>
 </div>
+
+
   
 
         
     
- <!-- Add Student Modal -->
-<div
-  class="modal fade"
-  id="addStudentModal"
-  tabindex="-1"
-  role="dialog"
-  aria-labelledby="addStudentModalLabel"
-  aria-hidden="true"
->
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" role="dialog" aria-labelledby="addStudentModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addStudentModalLabel">Add New Student</h5>
+        <h5 class="modal-title" id="addStudentModalLabel">Add Student</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div id="duplicateError" class="alert alert-danger" style="{% if duplicate_error %}display: block;{% else %}display: none;{% endif %}">
-          {{ duplicate_message or 'Student with this ID already exists.' }}
+        
+        <!-- Profile Picture Preview - Top Centered -->
+        <div class="text-center mb-4">
+          <label for="pic" style="cursor:pointer;">
+            <img
+              id="preview-image"
+              src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
+              alt="default-pic"
+              class="rounded-circle shadow"
+              style="width: 130px; height: 130px; object-fit: cover; opacity: 0.9;"
+            />
+            <input
+              type="file"
+              id="pic"
+              name="pic"
+              accept="image/*"
+              style="display: none;"
+              onchange="previewImage(event, this)"
+            >
+          </label>
         </div>
 
-        <form id="addStudentForm" action="{{ url_for('student.add_student') }}" method="POST" enctype="multipart/form-data">
-          <div class="row">
-            <div class="form-group" style="display: flex; justify-content: center; align-items: center;">
-              <label for="file-input" style="cursor: pointer;">
-                <div class="circle-container" style="position: relative;">
-                  <input
-                    type="file"
-                    id="file-input"
-                    name="pic"
-                    style="position: absolute; left: -9999px;"
-                    accept="image/*"
-                    onchange="previewImage(event, this)"
-                  />
-                  <input id="image_url" name="image_url" hidden />
-                  <img
-                    src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
-                    alt="default-pic"
-                    id="preview-image"
-                    style="opacity: 50%"
-                  />
-                  <div class="change-image">
-                    <img
-                      src="{{ url_for('static', filename='assets/edit.png') }}"
-                      alt="change"
-                      id="change-image"
-                      style="transform: scale(0.6);"
-                    />
-                  </div>
-                </div>
-              </label>
-            </div>
 
-            <!-- ID Number -->
-            <div class="row-md-6">
-              <div class="form-group">
-                <label for="studentID">ID Number</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="studentID"
-                  name="studentID"
-                  pattern="\d{4}-\d{4}"
-                  required
-                  value="{{ form_data.studentID if form_data else '' }}"
-                />
-                <small id="idHelp" class="form-text text-muted" style="font-size: 12px;">
-                  Format: YYYY-NNNN (e.g., 2023-1234)
-                </small>
-              </div>
-            </div>
+        <form id="addStudentForm" action="/students/add/" method="POST" enctype="multipart/form-data">
 
-            <!-- First Name and Last Name -->
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group mb-2">
-                  <label for="firstname">First Name</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="firstname"
-                    name="firstname"
-                    required
-                    value="{{ form_data.firstname if form_data else '' }}"
-                  />
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group mb-2">
-                  <label for="lastname">Last Name</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="lastname"
-                    name="lastname"
-                    required
-                    value="{{ form_data.lastame if form_data else '' }}"
-                  />
-                </div>
-              </div>
-            </div>
 
-            <!-- Course and Year -->
-            <div class="row">
-              <div class="col-md-9">
-                <div class="form-group mb-2">
-                  <label for="course">Course</label>
-                  <select class="form-select" id="course" name="course" required>
-                    <option value="" disabled {% if not form_data %}selected{% endif %} class="disabled-option">Select a course</option>
-                    {% for course in courses %}
-                      <option value="{{ course.code }}" {% if form_data and form_data.course == course.code %}selected{% endif %}>{{ course.name }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="form-group mb-2">
-                  <label for="year">Year</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="year"
-                    name="year"
-                    required
-                    value="{{ form_data.year if form_data else '' }}"
-                  />
-                </div>
-              </div>
-            </div>
+          <!-- ID Number -->
+          <div class="form-group mb-3">
+            <label for="idnumber"><strong>ID Number:</strong></label>
+            <input type="text" id="idnumber" name="studentID" class="form-control" pattern="\d{4}-\d{4}" required />
+            <small class="form-text text-muted">Format: YYYY-NNNN (e.g., 2023-1234)</small>
+          </div>
 
-            <!-- Gender -->
-            <div class="form-group mb-2">
-              <label for="gender">Gender</label>
-              <select class="form-select" id="gender" name="gender" required>
-                <option value="" disabled {% if not form_data %}selected{% endif %} class="disabled-option">Select gender</option>
-                {% set selected_gender = form_data.gender if form_data else None %}
-                <option value="Male" {% if selected_gender == 'Male' %}selected{% endif %}>Male</option>
-                <option value="Female" {% if selected_gender == 'Female' %}selected{% endif %}>Female</option>
-                <option value="Non-binary" {% if selected_gender == 'Non-binary' %}selected{% endif %}>Non-binary</option>
-                <option value="Transgender" {% if selected_gender == 'Transgender' %}selected{% endif %}>Transgender</option>
-                <option value="Prefer not to say" {% if selected_gender == 'Prefer not to say' %}selected{% endif %}>Prefer not to say</option>
-                <option value="Not listed" {% if selected_gender == 'Not listed' %}selected{% endif %}>Not listed</option>
-              </select>
-            </div>
 
-            <!-- CSRF Token -->
-            {{ form.hidden_tag() }}
+          <!-- First Name -->
+          <div class="form-group mb-3">
+            <label for="firstname"><strong>First Name:</strong></label>
+            <input type="text" id="firstname" name="firstname" class="form-control" required />
+          </div>
 
-            <!-- Modal footer -->
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" id="closeAddModalButton" data-dismiss="modal">
-                Close
-              </button>
-              <button type="submit" class="btn btn-primary">Add Student</button>
-            </div>
-          </form>
+          <!-- Last Name -->
+          <div class="form-group mb-3">
+            <label for="lastname"><strong>Last Name:</strong></label>
+            <input type="text" id="lastname" name="lastname" class="form-control" required />
+          </div>
+
+          <!-- Course -->
+          <div class="form-group mb-3">
+            <label for="course"><strong>Course:</strong></label>
+            <select id="course" name="course" class="form-select" required>
+              {% for course in courses %}
+                <option value="{{ course.code }}">{{ course.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Year -->
+          <div class="form-group mb-3">
+            <label for="year"><strong>Year:</strong></label>
+            <input type="number" id="year" name="year" class="form-control" min="1" max="5" required />
+          </div>
+
+          <!-- Gender -->
+          <div class="form-group mb-3">
+            <label for="gender"><strong>Gender:</strong></label>
+            <select id="gender" name="gender" class="form-select" required>
+              <option value="" disabled selected>Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Transgender">Transgender</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+              <option value="Not listed">Not listed</option>
+            </select>
+          </div>
+
+          <!-- CSRF Token -->
+          {{ form.hidden_tag() }}
+
+          <!-- Footer Buttons -->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add Student</button>
+          </div>
+
+        </form>
       </div>
     </div>
   </div>
 </div>
+
 
 
 
@@ -622,156 +500,150 @@
   </div>
 </div>
 
-
 <script>
 $(document).ready(function () {
-   $("#addButton").click(function () {
-      // Clear input fields and hidden fields when the modal is opened
-      $("#addStudentForm")[0].reset();
-      $("#hiddenPicture").val(""); 
-      $("#hiddenIDNumber").val("");
-      $("#hiddenFirstName").val("");
-      $("#hiddenLastName").val("");
-      $("#hiddenCourse").val("");
-      $("#hiddenYear").val("");
-      $("#hiddenGender").val("");
-      
-      $("#addStudentModal").modal("show");
-    });
-
-    $("#addStudentForm").submit(function (event) {
-      // Update hidden input fields with form data
-      console.log("Form Data before submission:", $("#addStudentForm").serialize());
-      $("#hiddenPicture").val($("#pic").val());
-      $("#hiddenIDNumber").val($("#idnumber").val());
-      $("#hiddenFirstname").val($("#firstname").val());
-      $("#hiddenLastname").val($("#lastname").val());
-      $("#hiddenCourse").val($("#course").val());
-      $("#hiddenYear").val($("#year").val());
-      $("#hiddenGender").val($("#gender").val());
-      console.log("Form submitted!"); 
-    });
-
-  // Close add modal function
-  function closeAddModal() {
-    $("#addStudentModal").modal("hide");
-  }
-
-  $("#closeAddModalButton").click(function () {
-    closeAddModal();
+  // Open Add Modal and reset form
+  $("#addButton").click(function () {
+    $("#addStudentForm")[0].reset();
+    $("#preview-image").attr("src", "{{ url_for('static', filename='assets/default-picture.jpg') }}").css("opacity", 0.8);
+    $("#addStudentModal").modal("show");
   });
 
+  // Preview Image function for Add form
+  window.previewImage = function(event, inputElement) {
+    const file = inputElement.files[0];
+    if (file && validateFileType(file)) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        $("#preview-image").attr("src", e.target.result).css("opacity", 1);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  
 
-  $("#deleteStudentFromList").click(function (event) {
-    if (!confirm("Are you sure you want to delete this student?")) {
+  function openEditModal(student) {
+  document.getElementById('studentID').value = student.studentID;
+  document.getElementsByName('originalStudentID')[0].value = student.studentID;
+  document.getElementById('firstname').value = student.firstname;
+  document.getElementById('lastname').value = student.lastname;
+  document.getElementById('year').value = student.year;
+  document.getElementById('gender').value = student.gender;
+
+  const courseSelect = document.getElementById('course');
+  [...courseSelect.options].forEach(option => {
+    option.selected = option.value === student.course;
+  });
+
+  document.getElementById('preview-image1').src = student.pic || "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+  document.getElementById('image_url1').value = student.pic;
+
+  $('#editStudentModal').modal('show');
+  }
+  // Validate image file type and size
+  function validateFileType(file) {
+    const allowedTypes = ["jpg", "jpeg", "png", "gif"];
+    const extension = file.name.split('.').pop().toLowerCase();
+    if (!allowedTypes.includes(extension)) {
+      alert("Only jpg, jpeg, png, and gif files are allowed!");
+      return false;
+    }
+    if (file.size > 1048576) { // 1MB
+      alert("File size exceeds 1MB. Please choose a smaller file.");
+      return false;
+    }
+    return true;
+  }
+
+  // ID format validation on submit
+  $("#addStudentForm").submit(function (event) {
+    const inputValue = $("#idnumber").val();
+    const regex = /^\d{4}-\d{4}$/;
+    if (!regex.test(inputValue)) {
       event.preventDefault();
-    } else {
-      var studentId = $(this).data("student-id");
+      alert("Invalid ID format. Please use the format: YYYY-NNNN (e.g., 2023-1234)");
     }
   });
 
+  // Close Add Modal button
+  $("#closeAddModalButton").click(function () {
+    $("#addStudentModal").modal("hide");
+  });
+
+  // Delete confirmation
+  $("#deleteStudentFromList").click(function (event) {
+    if (!confirm("Are you sure you want to delete this student?")) {
+      event.preventDefault();
+    }
+  });
+
+  // Search functionality
+  function performSearch() {
+    var searchField = $("#searchField").val();
+    var searchQuery = $("#searchInput").val().toLowerCase().trim();
+
+    $(".table-hover tbody tr").each(function () {
+      var rowData = (searchField === "all") ? $(this).text().toLowerCase() : $(this).find("." + searchField).text().toLowerCase();
+
+      if (rowData.includes(searchQuery)) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  }
+
   $("#searchButton").click(function(event) {
-    event.preventDefault(); // Prevent default button click behavior
+    event.preventDefault();
     performSearch();
   });
 
   $("#searchForm").submit(function(event) {
-        event.preventDefault(); // Prevent default form submission
-        performSearch();
-    });
-
-    function performSearch() {
-        var searchField = $("#searchField").val();
-        var searchQuery = $("#searchInput").val().toLowerCase();
-
-        $(".table-hover tbody tr").each(function () {
-            var rowData = $(this)
-                .find("." + searchField)
-                .text()
-                .toLowerCase();
-
-            if (searchField === "all") {
-                rowData = $(this).text().toLowerCase();
-            }
-
-            // Show/hide rows based on search query
-            if (rowData.includes(searchQuery)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    }
-
-
-
-   // Edit Modal
-   function closeEditModal() {
-    $("#editStudentModal").modal("hide");
-  }
-
-  $("#closeEditModalButton").click(function () {
-    closeEditModal();
+    event.preventDefault();
+    performSearch();
   });
-  
 
+  // Edit Modal Open & Populate
   $(".edit-button").click(function () {
-    var studentPic = $(this).data("student-pic"); // Ensure the attribute is correctly set
+    var studentPic = $(this).data("student-pic");
     var studentId = $(this).data("student-id");
     var firstname = $(this).data("firstname");
     var lastname = $(this).data("lastname");
     var course = $(this).data("course");
     var year = $(this).data("year");
     var gender = $(this).data("gender");
-    var currentCourse = $(this).data("course");
-  
-    // Populate the form fields with the student data
+    
+    // Save current image for fallback in previewImage1()
+    currentImage = (studentPic && studentPic !== "None") ? studentPic : "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+
+    // Populate form fields
     $("#editStudentForm input[name='studentID']").val(studentId);
     $("#editStudentForm input[name='firstname']").val(firstname);
     $("#editStudentForm input[name='lastname']").val(lastname);
-    $("#editStudentForm input[name='course']").val(course);
+    $("#editStudentForm select[name='course']").val(course);
     $("#editStudentForm input[name='year']").val(year);
     $("#editStudentForm select[name='gender']").val(gender);
-    $("#currentCourse").val(currentCourse);
+    $("#currentCourse").val(course);
     
-    console.log("before: ", studentPic)
-    // Set the image src attribute based on the selected row's data
-    if (studentPic === null || studentPic === undefined || studentPic === "None") {
-      $("#preview-image1").attr("src", "{{ url_for('static', filename='assets/default-picture.jpg') }}");
-    } else {
-      $("#preview-image1").attr("src", studentPic);
-    }
-    $("#editStudentForm input[name='image_url1']").val(studentPic); // Update the input field for image URL
-    
-    console.log(studentPic)
-    // Pre-select the correct option in the select field
-    $("#course").val(currentCourse);
-  
-    // Show the form for editing
+    // Set preview image src
+    $("#preview-image1").attr("src", currentImage);
+    $("#editStudentForm input[name='image_url1']").val(studentPic || "");
     
     $("#editStudentModal").modal("show");
   });
 
-  $("#editStudentForm").submit(function(event) {
-      event.preventDefault();
-
-      var studentId = $("#editStudentForm input[name='studentID']").val();
-      console.log("Old ID before appending:", studentId);
-      console.log("Form Data before submission:", $("#editStudentForm").serialize());
-      $("#editStudentForm").append('<input type="hidden" name="old_id" value="' + studentId + '">');
-      $("#editStudentForm").unbind('submit').submit();
+  // Close Edit Modal button
+  $("#closeEditModalButton").click(function () {
+    $("#editStudentModal").modal("hide");
   });
 
+ 
 
-
-  //student details show
-  $(".table tbody tr").on("click", function (event) {
+  // Student Details modal on row click except buttons
+  $(".table tbody tr").click(function (event) {
     if ($(event.target).hasClass("row-button")) {
-      return; 
+      return; // Ignore if clicked on buttons inside row
     }
-    // Get the data from the clicked row
     var studentPic = $(this).find(".img").attr('src');
     var studentID = $(this).find(".id").text();
     var firstname = $(this).find(".firstname").text();
@@ -781,56 +653,27 @@ $(document).ready(function () {
     var year = $(this).find(".year").text();
     var gender = $(this).find(".gender").text();
 
-    // Populate the modal with the student data
-    $("#detailsStudentPic").attr('src',studentPic);
+    // Fix typo in IDs for detail modal
+    $("#detailsStudentPic").attr('src', studentPic);
     $("#detailsStudentID").text(studentID);
-    $("#detailsFirstname").text(firstname);
+    $("#detailsFirstname").text(firstname);  // fixed from detailsFirstnName
     $("#detailsLastname").text(lastname);
     $("#detailsCourse").text(course);
     $("#detailsCollege").text(college);
     $("#detailsYear").text(year);
     $("#detailsGender").text(gender);
 
-    // Show the modal
     $("#studentDetailsModal").modal("show");
   });
 
 });
 
-//-----
-
-
-document.addEventListener("DOMContentLoaded", function () {
-  var form = document.getElementById("editStudentForm");
-
-       
-  form.addEventListener("submit", function (event) {
-    var studentIDInput = document.getElementById("studentID");
-    var inputValue = studentIDInput.value;
-    var regex = /^\d{4}-\d{4}$/;  // Regular expression for the format YYYY-NNNN
-
-    if (!regex.test(inputValue)) {
-      event.preventDefault();
-      alert("Invalid ID format. Please use the format: YYYY-NNNN (e.g., 2023-1234)");
-    }
-
-
-    
-});   
- 
-  
-});
-
-//--- Cloudinary
-//$("input.cloudinary-fileupload[type=file]").cloudinary_fileupload();
-
-// for add
-
+// Image validation helper
 function validateFileType(file) {
   var idxDot = file.name.lastIndexOf(".") + 1;
-  var extFile = file.name.substr(idxDot, file.name.length).toLowerCase();
-  
-  if (extFile == "jpg" || extFile == "jpeg" || extFile == "png" || extFile == "gif") {
+  var extFile = file.name.substr(idxDot).toLowerCase();
+
+  if (["jpg", "jpeg", "png", "gif"].includes(extFile)) {
     if (file.size <= 1048576) {
       return true;
     } else {
@@ -843,69 +686,84 @@ function validateFileType(file) {
   }
 }
 
-
-
-function previewImage(event, inputElement) {
+// Preview image for Add form
+function previewImage(event) {
   const file = event.target.files[0];
   const preview = document.getElementById('preview-image');
 
-  // accept images only
   if (validateFileType(file)) {
     const reader = new FileReader();
     reader.onload = function (e) {
       preview.src = e.target.result;
-      preview.style.display = 'block'; // Show the preview image
-      preview.style.opacity = file ? '1' : '0.5'; // Set opacity based on file selection
-    }
+      preview.style.display = 'block';
+      preview.style.opacity = '1';
+    };
     reader.readAsDataURL(file);
   }
 }
+document.addEventListener("DOMContentLoaded", function () {
+  const editButtons = document.querySelectorAll(".edit-button");
 
-// for edit
+  editButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const studentID = this.getAttribute("data-student-id");
+      const firstname = this.getAttribute("data-firstname");
+      const lastname = this.getAttribute("data-lastname");
+      const course = this.getAttribute("data-course");
+      const year = this.getAttribute("data-year");
+      const gender = this.getAttribute("data-gender");
+      const pic = this.getAttribute("data-student-pic") || "/static/assets/default-picture.jpg";
+
+      // Populate the edit form fields
+      document.getElementById("idnumber").value = studentID;   // <-- fixed id here
+      document.querySelector("input[name='originalStudentID']").value = studentID;
+      document.getElementById("firstname").value = firstname;
+      document.getElementById("lastname").value = lastname;
+      document.getElementById("course").value = course;
+      document.getElementById("year").value = year;
+      document.getElementById("gender").value = gender;
+
+      // Update image preview
+      const previewImage = document.getElementById("preview-image1");
+      previewImage.src = pic;
+
+      // Show the modal
+      $('#editStudentModal').modal('show');
+    });
+  });
+});
+
+// Preview image for Edit form
 function previewImage1(event) {
-  const file1 = event.target.files[0];
-  const reader1 = new FileReader();
-  const preview1 = document.getElementById('preview-image1');
+  const file = event.target.files[0];
+  const preview = document.getElementById('preview-image1');
 
-  reader1.onload = function (e) {
-    if (file1) {
-      if (validateFileType(file1)) {
-        preview1.src = e.target.result;
-        preview1.style.display = 'block'; // Show the preview image
-        preview1.style.opacity = '1'; // Set opacity to 1 for the selected image
-        preview1.dataset.studentPic = file1.name; // Set data-student-pic attribute
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    if (file) {
+      if (validateFileType(file)) {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        preview.style.opacity = '1';
+        preview.dataset.studentPic = file.name;
       } else {
-        // If the file doesn't pass validation, show the current image
-        if (currentImage) {
-          preview1.src = currentImage;
-          preview1.style.opacity = '1'; // Set opacity to 1 for the current image
-        } else {
-          // If no current image is available, show the default image
-          preview1.src = "{{ url_for('static', filename='assets/default-picture.jpg') }}";
-          preview1.style.opacity = '0.8'; // Set opacity back to default for the default image
-        }
+        // fallback to currentImage or default
+        preview.src = currentImage || "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+        preview.style.opacity = '0.8';
       }
     } else {
-      // If no file is selected, show the current image or default image
-      if (currentImage) {
-        preview1.src = currentImage;
-        preview1.style.opacity = '1'; // Set opacity to 1 for the current image
-      } else {
-        preview1.src = "{{ url_for('static', filename='assets/default-picture.jpg') }}";
-        preview1.style.opacity = '0.8'; // Set opacity back to default for the default image
-      }
+      preview.src = currentImage || "{{ url_for('static', filename='assets/default-picture.jpg') }}";
+      preview.style.opacity = '0.8';
     }
   };
+  
 
-
-
-  reader1.readAsDataURL(file1);
+  if (file) reader.readAsDataURL(file);
 }
 
 
 </script>
 
 
-
-{% endblock %}
-  
+  {% endblock %}
+    

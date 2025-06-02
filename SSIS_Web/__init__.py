@@ -1,11 +1,10 @@
 from flask import Flask
+from datetime import datetime
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, SECRET_KEY, CLOUD_NAME, CLOUD_APIKEY, CLOUDINARY_SECRET
 import cloudinary
 
 from SSIS_Web.extensions import csrf, mysql, bootstrap  
-
 from SSIS_Web.student.student_model import StudentManager
-
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True, static_url_path='/static')
@@ -16,6 +15,7 @@ def create_app(test_config=None):
         MYSQL_PASSWORD=DB_PASSWORD,
         MYSQL_DATABASE=DB_NAME,
         MYSQL_HOST=DB_HOST,
+        UPLOAD_FOLDER='static/uploads'  # <--- Add this line here
     )
 
     cloudinary.config(
@@ -42,5 +42,10 @@ def create_app(test_config=None):
 
     from .college.college_controller import college_bp as college_blueprint
     app.register_blueprint(college_blueprint)
+
+    # Add this context processor to inject 'now' variable into templates
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow()}
 
     return app

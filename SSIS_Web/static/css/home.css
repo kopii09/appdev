@@ -41,3 +41,18 @@ body {
   float: center;
   padding-top: 3em;
 }
+.modal-body {
+  padding: 1.5rem;
+}
+
+#preview-image {
+  display: block;
+  margin: 0 auto 1.5rem auto; /* center horizontally + bottom margin */
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  opacity: 0.9;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+}

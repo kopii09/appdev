@@ -109,8 +109,27 @@ body {
   background: #888; 
 }
 
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+#preview-image {
+  position: static !important;
+  margin-bottom: 2rem !important;
+  display: block;
+  margin-left: 100px;
+  margin-right: auto;
+  margin-top: 100px;
+  z-index: auto !important;
+}
+
 #detailsStudentPic {
-  margin-bottom: 1.5rem;
-  z-index: 0;
-  position: relative;
+   position: static !important;
+  margin-bottom: 2rem !important;
+  display: block;
+  margin-left: 100px;
+  margin-right: auto;
+  margin-top: 100px;
+  z-index: auto !important;
 }
