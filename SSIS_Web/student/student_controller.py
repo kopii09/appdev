@@ -56,6 +56,7 @@ def list_students():
 from flask import render_template, request, redirect, url_for, flash
 
 @student_bp.route('/students/add', methods=['GET', 'POST'])
+@csrf.exempt
 def add_student():
     form = StudentForm()
     page = 1
@@ -179,4 +180,16 @@ def update_student_photo(student_id):
         return jsonify({"message": "Photo updated", "url": secure_url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@student_bp.route('/students/edit/<string:student_id>', methods=['GET'])
+def show_edit_student_form(student_id):
+    student = StudentManager.get_student_by_id(student_id)
+    courses = StudentManager.get_courses()
+
+    if not student:
+        flash("Student not found.", "danger")
+        return redirect(url_for('student.list_students'))
+
+    # Pass the student data and courses to the edit form template
+    return render_template('student.html', student=student, courses=courses)
 

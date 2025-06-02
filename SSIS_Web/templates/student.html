@@ -84,7 +84,7 @@
   </div>
 
   <div class="table-container">
-    <!-- Bootstrap-styled table -->
+  <!-- Bootstrap-styled table -->
     <table class="table table-hover">
       <!-- Table header -->
       <thead>
@@ -103,19 +103,19 @@
       <tbody>
         <!-- Table rows for student data -->
         {% for student in student_data %}
-        <tr>
+        <tr class="student-row" data-student-id="{{ student.id }}" style="cursor: pointer;">
           <!-- Data for each column -->
-
           <td scope="row">
             <div class="circle-con">
-            <img class="img" src="{% if student.pic is not defined or student.pic is none %}
-            {{ url_for('static', filename='assets/default-picture.jpg') }}
-              {% else %}
-                {{ student.pic }}
-              {% endif %}"
-            style = "height:55px; width:55px;"/>
-            </div></td>
-          <td class="id">{{ student.id}}</td>
+              <img class="img" src="{% if student.pic is not defined or student.pic is none %}
+                {{ url_for('static', filename='assets/default-picture.jpg') }}
+                {% else %}
+                  {{ student.pic }}
+                {% endif %}"
+                style="height:55px; width:55px;"/>
+            </div>
+          </td>
+          <td class="id">{{ student.id }}</td>
           <td class="firstname">{{ student.firstname }}</td>
           <td class="lastname">{{ student.lastname }}</td>
           <td class="course">{{ student.course }}</td>
@@ -123,7 +123,7 @@
           <td class="year">{{ student.year }}</td>
           <td class="gender">{{ student.gender }}</td>
           <td>
-            <div class="btn-group" role="group">
+            <div class="btn-group" role="group" onclick="event.stopPropagation()">
               <!-- Edit button -->
               <button
                 class="btn btn-outline-info btn-sm edit-button row-button"
@@ -201,9 +201,52 @@
 
       </ul>
     </nav>
+  </div>
 
+<!-- Student Details Modal -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1" role="dialog" aria-labelledby="studentDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="studentDetailsModalLabel">Student Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body d-flex justify-content-center align-items-center flex-column" style="min-height: 400px;">
+
+        <!-- Student Picture -->
+        <div class="mb-4" style="margin-top: 70px;">
+          <img id="detailsStudentPic" src="" alt="Student Picture"
+              class="rounded-circle shadow"
+              style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #dee2e6;" />
+        </div>
+
+        <!-- Student Info Section -->
+        <div class="text-start w-100 px-4">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <p><strong>ID:</strong> <span id="detailsStudentID"></span></p>
+              <p><strong>First Name:</strong> <span id="detailsFirstnName"></span></p>
+              <p><strong>Last Name:</strong> <span id="detailsLastname"></span></p>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <p><strong>Course:</strong> <span id="detailsCourse"></span></p>
+              <p><strong>College:</strong> <span id="detailsCollege"></span></p>
+              <p><strong>Year:</strong> <span id="detailsYear"></span></p>
+              <p><strong>Gender:</strong> <span id="detailsGender"></span></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+    </div>
   </div>
 </div>
+
 
 <!-- EDIT Student Modal -->
 <div class="modal fade" id="editStudentModal" tabindex="-1" role="dialog" aria-labelledby="editStudentModalLabel" aria-hidden="true">
@@ -275,12 +318,12 @@
           <div class="row">
             <div class="col-md-6">
               <div class="form-group mb-2">
-                <label for="firstName">First Name</label>
+                <label for="firstname">First Name</label>
                 <input
                   type="text"
                   class="form-control"
-                  id="firstName"
-                  name="firstName"
+                  id="firstname"
+                  name="firstname"
                   data-student-id=""
                   required
                 />
@@ -289,12 +332,12 @@
           
               <div class="col-md-6">
                 <div class="form-group mb-2">
-                  <label for="lastName">Last Name</label>
+                  <label for="lastname">Last Name</label>
                   <input
                     type="text"
                     class="form-control"
-                    id="lastName"
-                    name="lastName"
+                    id="lastname"
+                    name="lastname"
                     data-student-id=""
                     required
                   />
@@ -452,27 +495,27 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group mb-2">
-                  <label for="firstName">First Name</label>
+                  <label for="firstname">First Name</label>
                   <input
                     type="text"
                     class="form-control"
-                    id="firstName"
-                    name="firstName"
+                    id="firstname"
+                    name="firstname"
                     required
-                    value="{{ form_data.firstName if form_data else '' }}"
+                    value="{{ form_data.firstname if form_data else '' }}"
                   />
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="form-group mb-2">
-                  <label for="lastName">Last Name</label>
+                  <label for="lastname">Last Name</label>
                   <input
                     type="text"
                     class="form-control"
-                    id="lastName"
-                    name="lastName"
+                    id="lastname"
+                    name="lastname"
                     required
-                    value="{{ form_data.lastName if form_data else '' }}"
+                    value="{{ form_data.lastame if form_data else '' }}"
                   />
                 </div>
               </div>
@@ -563,8 +606,8 @@
         <div class="row">
           <div class="col-sm-6 text-left" style="padding-left: 50px">
             <div>ID: <strong><span id="detailsStudentID"></span></strong></div>
-            <div>First Name: <strong><span id="detailsFirstName"></span></strong></div>
-            <div>Last Name: <strong><span id="detailsLastName"></span></strong></div>
+            <div>First Name: <strong><span id="detailsFirstname"></span></strong></div>
+            <div>Last Name: <strong><span id="detailsLastname"></span></strong></div>
           </div>
           <div class="col-sm-6 text-left" style="padding-left: 20px">
             <div>Course: <strong><span id="detailsCourse"></span></strong></div>
@@ -600,8 +643,8 @@ $(document).ready(function () {
       console.log("Form Data before submission:", $("#addStudentForm").serialize());
       $("#hiddenPicture").val($("#pic").val());
       $("#hiddenIDNumber").val($("#idnumber").val());
-      $("#hiddenFirstName").val($("#firstName").val());
-      $("#hiddenLastName").val($("#lastName").val());
+      $("#hiddenFirstname").val($("#firstname").val());
+      $("#hiddenLastname").val($("#lastname").val());
       $("#hiddenCourse").val($("#course").val());
       $("#hiddenYear").val($("#year").val());
       $("#hiddenGender").val($("#gender").val());
@@ -685,8 +728,8 @@ $(document).ready(function () {
   
     // Populate the form fields with the student data
     $("#editStudentForm input[name='studentID']").val(studentId);
-    $("#editStudentForm input[name='firstName']").val(firstname);
-    $("#editStudentForm input[name='lastName']").val(lastname);
+    $("#editStudentForm input[name='firstname']").val(firstname);
+    $("#editStudentForm input[name='lastname']").val(lastname);
     $("#editStudentForm input[name='course']").val(course);
     $("#editStudentForm input[name='year']").val(year);
     $("#editStudentForm select[name='gender']").val(gender);
@@ -730,8 +773,8 @@ $(document).ready(function () {
     // Get the data from the clicked row
     var studentPic = $(this).find(".img").attr('src');
     var studentID = $(this).find(".id").text();
-    var firstName = $(this).find(".firstname").text();
-    var lastName = $(this).find(".lastname").text();
+    var firstname = $(this).find(".firstname").text();
+    var lastname = $(this).find(".lastname").text();
     var course = $(this).find(".course").text();
     var year = $(this).find(".year").text();
     var gender = $(this).find(".gender").text();
@@ -739,8 +782,8 @@ $(document).ready(function () {
     // Populate the modal with the student data
     $("#detailsStudentPic").attr('src',studentPic);
     $("#detailsStudentID").text(studentID);
-    $("#detailsFirstName").text(firstName);
-    $("#detailsLastName").text(lastName);
+    $("#detailsFirstname").text(firstname);
+    $("#detailsLastname").text(lastname);
     $("#detailsCourse").text(course);
     $("#detailsYear").text(year);
     $("#detailsGender").text(gender);

@@ -41,28 +41,30 @@ class StudentManager:
     def add_student(cls, pic, id, firstname, lastname, course, gender, year):
         try:
             cur = cls.mysql.connection.cursor()
-            
+
             # Check duplicate
             cur.execute("SELECT * FROM student_info WHERE `id` = %s", (id,))
             if cur.fetchone():
                 return {'status': 'error', 'message': f"Student with ID '{id}' already exists."}
 
-            # Handle pic file upload
+            # Handle optional picture
             filename = None
-            if pic:
+            if pic and pic.filename:
                 filename = secure_filename(pic.filename)
                 upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 pic.save(upload_path)
 
-            # Insert student info into DB
+            # Insert into DB
             cur.execute(
-                "INSERT INTO student_info (`pic`, `id`, `firstname`, `lastname`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                "INSERT INTO student_info (`pic`, `id`, `firstname`, `lastname`, `course`, `gender`, `year`) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (filename, id, firstname, lastname, course, gender, year)
             )
             cls.mysql.connection.commit()
             return {'status': 'success', 'message': f"Student '{firstname} {lastname}' added successfully."}
         except Exception as e:
             return {'status': 'error', 'message': f"Error adding student: {e}"}
+
 
 
     @classmethod
