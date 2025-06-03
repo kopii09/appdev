@@ -122,8 +122,9 @@
                 class="row-button"
               >
                 {{ form.hidden_tag() }}
-                <button class="btn btn-outline-danger btn-sm ml-10 delete-button row-button" type="submit">
-                  <img src="/static/assets/delete.png" alt="Delete" class="icon row-button" />
+                <button class="btn btn-outline-danger btn-sm ml-10 delete-button row-button" data-course-code="{{ course.code }}"
+                 type="submit">
+                  <img src="/static/assets/delete.png" alt="Delete" class="icon row-button" />Delete
                 </button>
               </form>
             </div>
@@ -404,9 +405,9 @@
 
 
     $(".delete-course-form").submit(function(event) {
-      if (!confirm("Are you sure you want to delete this course? The students under this course will also be deleted.")) {
-          event.preventDefault();
-      }
+      if (!confirm("Are you sure you want to delete this course? ")) {
+      event.preventDefault();
+    }
   });
 
     $("#searchButton").click(function(event) {

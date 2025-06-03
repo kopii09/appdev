@@ -47,38 +47,43 @@
     <div class="col order-md-last mt-auto">
       <!-- Dropdown menu for selecting search field and input field for search query -->
       <div class="field-selection">
-        <!-- Dropdown menu for selecting search field -->
-        <select class="form-select search-selector" id="searchField">
-          <option value="all">All columns</option>
-          <option value="id">ID</option>
-          <option value="firstname">First name</option>
-          <option value="lastname">Last name</option>
-          <option value="course">Course</option>
-          <option value="college">College</option>
-          <option value="year">Year</option>
-          <option value="gender">Gender</option>
-        </select>
-
         <!-- Input field for search query -->
-        <form id="searchForm" class="col-md-9">
-        <div class="input-group custom-search-input ">
-          <input
-            type="text"
-            class="form-control custom-search-input"
-            id="searchInput"
-            placeholder="Search"
-          />
-          <div class="input-group-append">
-            <button
-              type="button"
-              class="btn btn-outline-info"
-              id="searchButton"
-            >
-              <img src="/static/assets/search.png" alt="Search" class="icon" />
-            </button>
+        <form id="searchForm" class="col-md-9" method="GET" action="/students"
+        style="display: flex; align-items: center; gap: 10px;">
+          <select
+            class="form-select search-selector"
+            id="searchField"
+            name="searchField"
+            style="width: 140px;"
+          >
+            <option value="all">All columns</option>
+            <option value="id">ID</option>
+            <option value="firstname">First name</option>
+            <option value="lastname">Last name</option>
+            <option value="course">Course</option>
+            <option value="college">College</option>
+            <option value="year">Year</option>
+            <option value="gender">Gender</option>
+          </select>
+
+          <div class="input-group custom-search-input" style="flex-grow: 1;">
+            <input
+              type="text"
+              class="form-control custom-search-input"
+              id="searchInput"
+              name="searchInput"
+              placeholder="Search"
+              required
+            />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-outline-info" id="searchButton">
+                <img src="/static/assets/search.png" alt="Search" class="icon" />
+              </button>
+            </div>
           </div>
+
         </form>
-        </div>
+
       </div>
     </div>
   </div>
@@ -107,15 +112,12 @@
           <!-- Data for each column -->
           <td scope="row">
             <div class="circle-con">
-              <img class="img" src="{% if not student.pic %}
-                {{ url_for('static', filename='assets/default-picture.jpg') }}
-                {% else %}
-                {{ student.pic }}?v={{ range(1000000)|random }}
-                {% endif %}" 
-                style="height:55px; width:55px;"/>
-
+              <img class="img"
+                  src="{{ student.pic if student.pic else url_for('static', filename='assets/default-picture.jpg') }}"
+                  style="height:55px; width:55px; object-fit: cover; border-radius: 50%;" />
             </div>
           </td>
+
           <td class="id">{{ student.id }}</td>
           <td class="firstname">{{ student.firstname }}</td>
           <td class="lastname">{{ student.lastname }}</td>
@@ -229,7 +231,7 @@
           <div class="row">
             <div class="col-sm-6 mb-3">
               <p><strong>ID:</strong> <span id="detailsStudentID"></span></p>
-              <p><strong>First Name:</strong> <span id="detailsFirstnName"></span></p>
+              <p><strong>First Name:</strong> <span id="detailsFirstname"></span></p>
               <p><strong>Last Name:</strong> <span id="detailsLastname"></span></p>
             </div>
             <div class="col-sm-6 mb-3">
@@ -240,10 +242,7 @@
             </div>
           </div>
         </div>
-
       </div>
-
-
     </div>
   </div>
 </div>
@@ -267,7 +266,7 @@
           <div class="text-center mb-4">
             <label for="file-input1" style="cursor: pointer; display: inline-block;">
               <input type="file" id="file-input1" name="pic1" class="d-none" accept="image/*" onchange="previewImage1(event)">
-              <input id="image_url1" name="image_url1" type="hidden">
+              <input id="pic" name="image_url" type="hidden">
               <img 
                 id="preview-image1"
                 src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
@@ -368,30 +367,16 @@
       <div class="modal-body">
         
         <!-- Profile Picture Preview - Top Centered -->
-        <div class="text-center mb-4">
-          <label for="pic" style="cursor:pointer;">
-            <img
-              id="preview-image"
-              src="{{ url_for('static', filename='assets/default-picture.jpg') }}"
-              alt="default-pic"
-              class="rounded-circle shadow"
-              style="width: 130px; height: 130px; object-fit: cover; opacity: 0.9;"
-            />
-            <input
-              type="file"
-              id="pic"
-              name="pic"
-              accept="image/*"
-              style="display: none;"
-              onchange="previewImage(event, this)"
-            >
-          </label>
-        </div>
+        
 
 
-        <form id="addStudentForm" action="/students/add/" method="POST" enctype="multipart/form-data">
+        <form id="addStudentForm" action="{{ url_for('student.add_student') }}" method="POST" enctype="multipart/form-data">
 
-
+          <!-- Picture Upload -->
+          <div class="form-group mb-3">
+            <label for="pic"><strong>Upload Picture:</strong></label>
+            <input type="file" id="pic" name="pic" class="form-control" accept="image/*" />
+          </div>
           <!-- ID Number -->
           <div class="form-group mb-3">
             <label for="idnumber"><strong>ID Number:</strong></label>
@@ -467,7 +452,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="studentDetailsModalLabel">Student Details</h5>
-        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"> 
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -495,11 +480,11 @@
           </div>
         </div>
       </div>
-      
     </div>
   </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function () {
   // Open Add Modal and reset form
@@ -555,15 +540,15 @@ $(document).ready(function () {
     return true;
   }
 
-  // ID format validation on submit
-  $("#addStudentForm").submit(function (event) {
-    const inputValue = $("#idnumber").val();
+  $("#addStudentForm").addstudent(function (event) {
+    const inputValue = $("#idnumber").val().trim(); // Trim spaces
     const regex = /^\d{4}-\d{4}$/;
     if (!regex.test(inputValue)) {
       event.preventDefault();
       alert("Invalid ID format. Please use the format: YYYY-NNNN (e.g., 2023-1234)");
     }
   });
+
 
   // Close Add Modal button
   $("#closeAddModalButton").click(function () {
@@ -576,14 +561,18 @@ $(document).ready(function () {
       event.preventDefault();
     }
   });
-
-  // Search functionality
+ 
   function performSearch() {
     var searchField = $("#searchField").val();
     var searchQuery = $("#searchInput").val().toLowerCase().trim();
 
     $(".table-hover tbody tr").each(function () {
-      var rowData = (searchField === "all") ? $(this).text().toLowerCase() : $(this).find("." + searchField).text().toLowerCase();
+      var rowData;
+      if (searchField === "all") {
+        rowData = $(this).text().toLowerCase();
+      } else {
+        rowData = $(this).find("td." + searchField).text().toLowerCase();
+      }
 
       if (rowData.includes(searchQuery)) {
         $(this).show();
@@ -593,15 +582,19 @@ $(document).ready(function () {
     });
   }
 
-  $("#searchButton").click(function(event) {
+  $("#searchButton").on("click", function(event) {
     event.preventDefault();
     performSearch();
   });
 
-  $("#searchForm").submit(function(event) {
+  $("#searchForm").on("submit", function(event) {
     event.preventDefault();
     performSearch();
   });
+
+
+
+
 
   // Edit Modal Open & Populate
   $(".edit-button").click(function () {

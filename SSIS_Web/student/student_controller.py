@@ -21,27 +21,28 @@ def home():
     return render_template('home.html')
 
 
-@student_bp.route('/students', methods=['GET', 'POST'])
+@student_bp.route('/students', methods=['GET'])
 def list_students():
     form = StudentForm()
     courses = StudentManager.get_courses()
 
     # Pagination parameters
-    page = request.args.get('page', 1, type=int)  # default to page 1
-    per_page = 10  # number of students per page, you can adjust
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
 
-    if request.method == 'POST':
-        search_field = request.form.get('searchField')
-        search_query = request.form.get('searchInput')
-        # Perform search (you can extend pagination here too if needed)
-        student_data = StudentManager.search_students(
-            field=search_field, query=search_query)
+    # Search parameters from query string
+    search_field = request.args.get('searchField', 'all')
+    search_query = request.args.get('searchInput', '').strip()
+
+    if search_query:
+        # If search query exists, perform search with pagination support
+        student_data = StudentManager.search_students_paginated(
+            field=search_field, query=search_query, page=page, per_page=per_page)
+        total_students = StudentManager.count_students_search(field=search_field, query=search_query)
     else:
-        # Retrieve paginated students instead of all
+        # No search, get paginated full list
         student_data = StudentManager.get_student_data_paginated(page=page, per_page=per_page)
-
-    # You also want to know total count for pagination UI
-    total_students = StudentManager.count_students()
+        total_students = StudentManager.count_students()
 
     total_pages = (total_students + per_page - 1) // per_page
 
@@ -51,11 +52,14 @@ def list_students():
                            courses=courses,
                            page=page,
                            per_page=per_page,
-                           total_pages=total_pages)
+                           total_pages=total_pages,
+                           search_field=search_field,
+                           search_query=search_query)
 
 
 
 from flask import render_template, request, redirect, url_for, flash
+
 
 @student_bp.route('/students/add', methods=['GET', 'POST'])
 @csrf.exempt
@@ -75,7 +79,7 @@ def add_student():
         year = request.form.get('year')
         pic = request.files.get('pic')
 
-        # Check if all required fields are filled
+        # Validate required fields
         if not all([studentID, firstname, lastname, course, gender, year]):
             flash("Please fill in all required fields.", "danger")
             return render_template(
@@ -91,7 +95,7 @@ def add_student():
                 form_data=request.form
             )
 
-        # Check for duplicate student ID
+        # Check duplicate student ID
         if StudentManager.is_duplicate(studentID):
             flash(f"Student with ID {studentID} already exists.", "danger")
             return render_template(
@@ -107,16 +111,24 @@ def add_student():
                 form_data=request.form
             )
 
-        # Add student using your existing logic
-        result = StudentManager.add_student(pic, studentID, firstname, lastname, course, gender, year)
+        # Upload image to Cloudinary if pic uploaded
+        pic_url = None
+        if pic and pic.filename != '':
+            try:
+                upload_result = upload(pic, folder="SSIS Web", resource_type='image')
+                pic_url = upload_result.get('secure_url')
+            except Exception as e:
+                flash(f"Error uploading image: {e}", "danger")
+                pic_url = None
+
+        # Add student to DB
+        result = StudentManager.add_student(pic_url, studentID, firstname, lastname, course, gender, year)
 
         if result['status'] == 'success':
             flash(result['message'], 'success')
-            # Redirect to first page of student list to see the new student
             return redirect(url_for('student.list_students', page=1))
         else:
             flash(result['message'], 'danger')
-            # Re-render form with message if add failed
             return render_template(
                 'student.html',
                 form=form,
@@ -130,7 +142,6 @@ def add_student():
                 form_data=request.form
             )
 
-    # GET request just render empty form
     return render_template(
         'student.html',
         form=form,
@@ -140,7 +151,6 @@ def add_student():
         per_page=per_page,
         total_pages=total_pages
     )
-
 
 
 @student_bp.route('/students/delete/<string:student_id>', methods=['POST'])

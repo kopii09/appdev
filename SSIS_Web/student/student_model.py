@@ -11,6 +11,90 @@ class StudentManager:
     def init_db(cls, mysql):
         cls.mysql = mysql
 
+
+    @classmethod
+    def search_students_paginated(cls, field, query, page, per_page):
+        try:
+            cur = cls.mysql.connection.cursor(dictionary=True)
+            query = query.lower().strip()
+            offset = (page - 1) * per_page
+
+            if field == 'all':
+                sql = """
+                    SELECT * FROM student_info
+                    WHERE LOWER(id) LIKE %s
+                    OR LOWER(firstname) LIKE %s
+                    OR LOWER(lastname) LIKE %s
+                    OR LOWER(course) LIKE %s
+                    OR LOWER(year) LIKE %s
+                    OR LOWER(gender) LIKE %s
+                    LIMIT %s OFFSET %s
+                """
+                like_query = f"%{query}%"
+                params = [like_query]*6 + [per_page, offset]
+            else:
+                allowed_fields = {'id', 'firstname', 'lastname', 'course', 'year', 'gender'}
+                if field not in allowed_fields:
+                    field = 'id'
+
+                sql = f"""
+                    SELECT * FROM student_info
+                    WHERE LOWER({field}) LIKE %s
+                    LIMIT %s OFFSET %s
+                """
+                like_query = f"%{query}%"
+                params = [like_query, per_page, offset]
+
+            print("Executing SQL:", sql)
+            print("With params:", params)
+
+            cur.execute(sql, params)
+            results = cur.fetchall()
+            cur.close()
+            return results
+        except Exception as e:
+            print(f"Error in search_students_paginated: {e}")
+            return []
+
+
+    @classmethod
+    def count_students_search(cls, field, query):
+        try:
+            cur = cls.mysql.connection.cursor()
+            query = query.lower().strip()
+
+            if field == 'all':
+                sql = """
+                    SELECT COUNT(*) FROM student_info
+                    WHERE LOWER(id) LIKE %s
+                       OR LOWER(firstname) LIKE %s
+                       OR LOWER(lastname) LIKE %s
+                       OR LOWER(course) LIKE %s
+                       OR LOWER(year) LIKE %s
+                       OR LOWER(gender) LIKE %s
+                """
+                like_query = f"%{query}%"
+                params = [like_query]*6
+            else:
+                allowed_fields = {'id', 'firstname', 'lastname', 'course', 'year', 'gender'}
+                if field not in allowed_fields:
+                    field = 'id'
+                
+                sql = f"""
+                    SELECT COUNT(*) FROM student_info
+                    WHERE LOWER({field}) LIKE %s
+                """
+                like_query = f"%{query}%"
+                params = [like_query]
+
+            cur.execute(sql, params)
+            count = cur.fetchone()[0]
+            cur.close()
+            return count
+        except Exception as e:
+            print(f"Error in count_students_search: {e}")
+            return 0
+
     @classmethod
     def get_student_data(cls):
         cur = cls.mysql.connection.cursor(dictionary=True)
@@ -32,39 +116,31 @@ class StudentManager:
             print(f"Error fetching course: {e}")
             return []
 
+    
     @classmethod
-    def add_student(cls, pic, id, firstname, lastname, course, gender, year):
+    def add_student(cls, pic_url, studentID, firstname, lastname, course, gender, year):
         try:
-            cur = cls.mysql.connection.cursor()
+            print(f"Adding student {studentID} with pic URL: {pic_url}")  # Debug output
 
-            # Check duplicate student ID
-            cur.execute("SELECT * FROM student_info WHERE `id` = %s", (id,))
-            if cur.fetchone():
-                return {'status': 'error', 'message': f"Student with ID '{id}' already exists."}
+            conn = cls.mysql.connection
+            cursor = conn.cursor()
 
-            pic_url = None
-            if pic and pic.filename != '':
-                try:
-                    print(f"Uploading file: {pic.filename}")
-                    upload_result = upload(pic, folder="SSIS Web", resource_type='image')  # or pic.stream if needed
-                    pic_url = upload_result['secure_url']
-                    print(f"Upload successful: {pic_url}")
-                except Exception as e:
-                    print(f"Cloudinary upload failed: {e}")
-                    return {'status': 'error', 'message': f"Image upload failed: {e}"}
-            else:
-                print("No image uploaded")
+            query = """
+                INSERT INTO student_info (id, firstname, lastname, course, gender, year, pic)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            values = (studentID, firstname, lastname, course, gender, year, pic_url)
 
-            cur.execute(
-                "INSERT INTO student_info (`pic`, `id`, `firstname`, `lastname`, `course`, `gender`, `year`) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (pic_url, id, firstname, lastname, course, gender, year)
-            )
-            cls.mysql.connection.commit()
-            return {'status': 'success', 'message': f"Student '{firstname} {lastname}' added successfully."}
+            cursor.execute(query, values)
+            conn.commit()  # Don't forget to commit!
+
+            cursor.close()
+
+            return {'status': 'success', 'message': 'Student added successfully.'}
 
         except Exception as e:
-            print(f"Exception: {e}")
-            return {'status': 'error', 'message': f"Error adding student: {e}"}
+            print(f"Error adding student: {e}")
+            return {'status': 'error', 'message': f'Failed to add student: {e}'}
 
 
 
