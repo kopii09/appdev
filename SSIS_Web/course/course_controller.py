@@ -96,6 +96,7 @@ def api_add_course():
 
 
 @course_bp.route('/courses/delete/<string:code>', methods=['POST'])
+@csrf.exempt
 def delete_course(code):
     try:
         CourseManager.delete_course(code)

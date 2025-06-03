@@ -49,15 +49,22 @@ class CourseManager:
    
     @classmethod
     def delete_course(cls, code):
+        try:
             cur = cls.mysql.connection.cursor()
-            cur.execute("SELECT * FROM course WHERE `code` = %s", (code,))
-            course = cur.fetchone()
+            # Disassociate students from the course
+            cur.execute("UPDATE student_info SET course = NULL WHERE course = %s", (code,))
+            
+            # Now delete the course
+            cur.execute("DELETE FROM course WHERE code = %s", (code,))
 
-            if course:
-                # Delete the course from the database
-                print("Deleting course with ID:", code)
-                cur.execute("DELETE FROM course WHERE `code` = %s", (code,))
-                cls.mysql.connection.commit()
+            cls.mysql.connection.commit()
+            print(f"College {code} deleted successfully.")
+
+        except Exception as e:
+            print(f"Error deleting college: {e}")
+
+        finally:
+            cur.close()
 
     @classmethod
     def search_courses(cls, field=None, query=None):
