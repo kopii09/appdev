@@ -1,5 +1,7 @@
 from flask_mysql_connector import MySQL
 from cloudinary.uploader import upload
+from SSIS_Web.course.course_model import CourseManager
+
 
 
 
@@ -16,33 +18,54 @@ class StudentManager:
     def search_students_paginated(cls, field, query, page, per_page):
         try:
             cur = cls.mysql.connection.cursor(dictionary=True)
-            query = query.lower().strip()
+            query_lower = query.lower().strip()
             offset = (page - 1) * per_page
+            like_query = f"%{query_lower}%"
+
+            base_sql = """
+                SELECT student_info.*, course.code AS course, college.code AS college
+                FROM student_info
+                LEFT JOIN course ON course.code = student_info.course
+                LEFT JOIN college ON college.code = course.college
+            """
+
+            allowed_fields = {'id', 'firstname', 'lastname', 'course', 'college', 'year', 'gender'}
 
             if field == 'all':
-                sql = """
-                    SELECT * FROM student_info
-                    WHERE LOWER(id) LIKE %s
-                    OR LOWER(firstname) LIKE %s
-                    OR LOWER(lastname) LIKE %s
-                    OR LOWER(course) LIKE %s
-                    OR LOWER(year) LIKE %s
-                    OR LOWER(gender) LIKE %s
+                sql = base_sql + """
+                    WHERE LOWER(student_info.id) LIKE %s
+                    OR LOWER(student_info.firstname) LIKE %s
+                    OR LOWER(student_info.lastname) LIKE %s
+                    OR LOWER(course.code) LIKE %s
+                    OR LOWER(college.code) LIKE %s
+                    OR student_info.year = %s
+                    OR LOWER(student_info.gender) LIKE %s
                     LIMIT %s OFFSET %s
                 """
-                like_query = f"%{query}%"
-                params = [like_query]*6 + [per_page, offset]
+                params = [like_query, like_query, like_query, like_query, like_query, query, like_query, per_page, offset]
+
+
             else:
-                allowed_fields = {'id', 'firstname', 'lastname', 'course', 'year', 'gender'}
                 if field not in allowed_fields:
                     field = 'id'
 
-                sql = f"""
-                    SELECT * FROM student_info
-                    WHERE LOWER({field}) LIKE %s
-                    LIMIT %s OFFSET %s
-                """
-                like_query = f"%{query}%"
+                if field == 'course':
+                    sql = base_sql + """
+                        WHERE (LOWER(course.code) LIKE %s OR course.code IS NULL)
+                        LIMIT %s OFFSET %s
+                    """
+                    params = [like_query, per_page, offset]
+
+                elif field == 'college':
+                    sql = base_sql + """
+                        WHERE LOWER(college.code) LIKE %s
+                        LIMIT %s OFFSET %s
+                    """
+                else:
+                    sql = base_sql + f"""
+                        WHERE LOWER(student_info.{field}) LIKE %s
+                        LIMIT %s OFFSET %s
+                    """
                 params = [like_query, per_page, offset]
 
             print("Executing SQL:", sql)
@@ -52,9 +75,13 @@ class StudentManager:
             results = cur.fetchall()
             cur.close()
             return results
+
         except Exception as e:
             print(f"Error in search_students_paginated: {e}")
             return []
+
+
+
 
 
     @classmethod
@@ -62,29 +89,38 @@ class StudentManager:
         try:
             cur = cls.mysql.connection.cursor()
             query = query.lower().strip()
+            like_query = f"%{query}%"
+
+            base_sql = """
+                SELECT COUNT(*) FROM student_info
+                INNER JOIN course ON course.code = student_info.course
+                LEFT JOIN college ON college.code = student_info.college
+            """
+
 
             if field == 'all':
-                sql = """
-                    SELECT COUNT(*) FROM student_info
-                    WHERE LOWER(id) LIKE %s
-                       OR LOWER(firstname) LIKE %s
-                       OR LOWER(lastname) LIKE %s
-                       OR LOWER(course) LIKE %s
-                       OR LOWER(year) LIKE %s
-                       OR LOWER(gender) LIKE %s
+                sql = base_sql + """
+                    WHERE LOWER(student_info.id) LIKE %s
+                    OR LOWER(student_info.firstname) LIKE %s
+                    OR LOWER(student_info.lastname) LIKE %s
+                    OR LOWER(course.name) LIKE %s
+                    OR LOWER(student_info.year) LIKE %s
+                    OR LOWER(student_info.gender) LIKE %s
                 """
-                like_query = f"%{query}%"
-                params = [like_query]*6
+                params = [like_query] * 6
             else:
                 allowed_fields = {'id', 'firstname', 'lastname', 'course', 'year', 'gender'}
                 if field not in allowed_fields:
                     field = 'id'
                 
-                sql = f"""
-                    SELECT COUNT(*) FROM student_info
-                    WHERE LOWER({field}) LIKE %s
-                """
-                like_query = f"%{query}%"
+                if field == 'course':
+                    sql = base_sql + """
+                        WHERE LOWER(course.name) LIKE %s
+                    """
+                else:
+                    sql = base_sql + f"""
+                        WHERE LOWER(student_info.{field}) LIKE %s
+                    """
                 params = [like_query]
 
             cur.execute(sql, params)
@@ -99,7 +135,8 @@ class StudentManager:
     def get_student_data(cls):
         cur = cls.mysql.connection.cursor(dictionary=True)
         cur.execute(
-            "SELECT * FROM student_info INNER JOIN course on course.code = student_info.course")
+            "SELECT * FROM student_info LEFT JOIN course on course.code = student_info.course")
+
         student_data = cur.fetchall()
         cur.close()
         return student_data
@@ -118,22 +155,19 @@ class StudentManager:
 
     
     @classmethod
-    def add_student(cls, pic_url, studentID, firstname, lastname, course, gender, year):
+    def add_student(cls, pic_url, studentID, firstname, lastname, course, gender, year, college):
         try:
-            print(f"Adding student {studentID} with pic URL: {pic_url}")  # Debug output
-
             conn = cls.mysql.connection
             cursor = conn.cursor()
 
             query = """
-                INSERT INTO student_info (id, firstname, lastname, course, gender, year, pic)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO student_info (id, firstname, lastname, course, gender, year, pic, college)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            values = (studentID, firstname, lastname, course, gender, year, pic_url)
+            values = (studentID, firstname, lastname, course, gender, year, pic_url, college)
 
             cursor.execute(query, values)
-            conn.commit()  # Don't forget to commit!
-
+            conn.commit()
             cursor.close()
 
             return {'status': 'success', 'message': 'Student added successfully.'}
@@ -141,6 +175,25 @@ class StudentManager:
         except Exception as e:
             print(f"Error adding student: {e}")
             return {'status': 'error', 'message': f'Failed to add student: {e}'}
+
+
+
+    @classmethod
+    def get_college_by_course(cls, course_name):
+        try:
+            conn = cls.mysql.connection
+            cursor = conn.cursor(dictionary=True)
+
+            query = "SELECT college FROM courses WHERE course = %s LIMIT 1"
+            cursor.execute(query, (course_name,))
+            result = cursor.fetchone()
+
+            cursor.close()
+
+            return result['college'] if result else None
+        except Exception as e:
+            print(f"Error fetching college by course: {e}")
+            return None
 
 
 
@@ -187,23 +240,33 @@ class StudentManager:
         try:
             cur = cls.mysql.connection.cursor(dictionary=True)
 
-            if field != 'all':
+            if field and field != 'all':
                 cur.execute(
-                    f"SELECT * FROM student_info WHERE `{field}` LIKE %s", (f"%{query}%",))
-            else:
+                    f"SELECT * FROM student_info WHERE `{field}` LIKE %s", (f"%{query}%",)
+                )
+            elif field == 'all':
                 cur.execute("""
                     SELECT * FROM student_info 
                     WHERE id LIKE %s OR firstname LIKE %s OR lastname LIKE %s 
                     OR course LIKE %s OR year LIKE %s OR gender LIKE %s
                 """, (f"%{query}%",) * 6)
+            else:
+                flash("Invalid search field.", "danger")
+                return []
 
             student_data = cur.fetchall()
             cur.close()
+
+            if not student_data:
+                flash("Student does not exist.", "danger")
+
             return student_data
 
         except Exception as e:
             print(f"Error searching students: {e}")
-            return None
+            flash("An error occurred while searching for students.", "danger")
+            return []
+
 
 
     @classmethod
@@ -250,6 +313,7 @@ class StudentManager:
             LEFT JOIN college ON college.code = student_info.college
             WHERE student_info.id = %s
         """, (student_id,))
+
         student = cur.fetchone()
         cur.close()
         return student
@@ -261,9 +325,10 @@ class StudentManager:
             cur = cls.mysql.connection.cursor(dictionary=True)
             query = """
                 SELECT * FROM student_info
-                INNER JOIN course ON course.code = student_info.course
+                LEFT JOIN course ON course.code = student_info.course
                 LIMIT %s OFFSET %s
             """
+
             cur.execute(query, (per_page, offset))
             result = cur.fetchall()
             cur.close()

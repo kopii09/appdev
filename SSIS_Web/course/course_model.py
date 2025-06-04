@@ -58,7 +58,7 @@ class CourseManager:
             cur.execute("DELETE FROM course WHERE code = %s", (code,))
 
             cls.mysql.connection.commit()
-            print(f"College {code} deleted successfully.")
+            print(f"Course {code} deleted successfully.")
 
         except Exception as e:
             print(f"Error deleting college: {e}")
@@ -111,7 +111,7 @@ class CourseManager:
     @classmethod
     def get_course_by_code(cls, code):
             cur = cls.mysql.connection.cursor(dictionary=True)
-            cur.execute("SELECT * FROM course WHERE `code` = %s", (code))
+            cur.execute("SELECT * FROM course WHERE `code` = %s", (code,))
             course= cur.fetchone()
             print
             cur.close()
